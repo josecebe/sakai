@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<registration>
+    <tool id="sakai.wickettestapp" 
+        title="Wicket Test App" 
+        description="The Wicket Test App">
+
+        <category name="course" />
+        <category name="project" />
+    </tool>
+</registration>

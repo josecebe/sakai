@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="org.sakaiproject.wicket.test.app.api.GradingsService"
+        class="org.sakaiproject.wicket.test.app.impl.GradingsServiceImpl"
+        init-method="init">
+        <property name="sqlService"><ref bean="org.sakaiproject.db.api.SqlService"/></property>
+        <property name="siteService"><ref bean="org.sakaiproject.site.api.SiteService"/></property>
+        <property name="memoryService"><ref bean="org.sakaiproject.memory.api.MemoryService"/></property>
+    </bean>
+
+    <bean id="org.sakaiproject.wicket.test.app.api.ExportService"
+        class="org.sakaiproject.wicket.test.app.impl.ExportServiceImpl"
+        init-method="init">
+    </bean>
+</beans>

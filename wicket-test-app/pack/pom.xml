@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <artifactId>wicket-test-app</artifactId>
+        <groupId>org.sakaiproject.wicket.test.app</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <name>wicket-test-app - Components</name>
+    <groupId>org.sakaiproject.wicket.test.app</groupId>
+    <artifactId>wicket-test-app-pack</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>sakai-component</packaging>
+
+    <properties>
+        <deploy.target>components</deploy.target>
+    </properties>
+
+    <dependencies>
+        <!-- internal dependencies -->
+        <dependency>
+            <groupId>org.sakaiproject.wicket.test.app</groupId>
+            <artifactId>wicket-test-app-impl</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+</project>
