@@ -46,6 +46,7 @@ import org.apache.commons.lang.StringUtils;
 
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.event.cover.EventTrackingService;
+import org.sakaiproject.rubrics.logic.RubricsService;
 import org.sakaiproject.samigo.util.SamigoConstants;
 import org.sakaiproject.tags.api.Tag;
 import org.sakaiproject.tags.api.TagService;
@@ -83,6 +84,7 @@ import org.sakaiproject.tool.assessment.services.assessment.AssessmentService;
 import org.sakaiproject.tool.assessment.services.assessment.PublishedAssessmentService;
 import org.sakaiproject.tool.assessment.ui.bean.author.AnswerBean;
 import org.sakaiproject.tool.assessment.ui.bean.author.AssessmentBean;
+import org.sakaiproject.tool.assessment.ui.bean.author.AssessmentSettingsBean;
 import org.sakaiproject.tool.assessment.ui.bean.author.AuthorBean;
 import org.sakaiproject.tool.assessment.ui.bean.author.CalculatedQuestionAnswerIfc;
 import org.sakaiproject.tool.assessment.ui.bean.author.CalculatedQuestionFormulaBean;
@@ -92,10 +94,12 @@ import org.sakaiproject.tool.assessment.ui.bean.author.ItemAuthorBean;
 import org.sakaiproject.tool.assessment.ui.bean.author.ItemBean;
 import org.sakaiproject.tool.assessment.ui.bean.author.MatchItemBean;
 import org.sakaiproject.tool.assessment.ui.bean.author.CalculatedQuestionBean;
+import org.sakaiproject.tool.assessment.ui.bean.author.PublishedAssessmentSettingsBean;
 import org.sakaiproject.tool.assessment.ui.bean.authz.AuthorizationBean;
 import org.sakaiproject.tool.assessment.ui.bean.questionpool.QuestionPoolBean;
 import org.sakaiproject.tool.assessment.ui.bean.questionpool.QuestionPoolDataBean;
 import org.sakaiproject.tool.assessment.ui.listener.util.ContextUtil;
+import org.sakaiproject.tool.assessment.util.ParameterUtil;
 import org.sakaiproject.tool.assessment.util.TextFormat;
 import org.sakaiproject.tool.assessment.ws.Item;
 import org.sakaiproject.util.FormattedText;
@@ -117,6 +121,8 @@ public class ItemAddListener
   private boolean isEditPendingAssessmentFlow = true;
   AssessmentService assessdelegate;
 
+  private RubricsService rubricsService = ComponentManager.get(RubricsService.class);
+
   /**
    * Standard process action method.
    * @param ae ActionEvent
@@ -126,9 +132,15 @@ public class ItemAddListener
 
 	log.debug("ItemAdd LISTENER.");
 
+    AssessmentSettingsBean assessmentSettings = (AssessmentSettingsBean) ContextUtil.lookupBean("assessmentSettings");
+    PublishedAssessmentSettingsBean publishedSettings = (PublishedAssessmentSettingsBean) ContextUtil.lookupBean("publishedSettings");
     ItemAuthorBean itemauthorbean = (ItemAuthorBean) ContextUtil.lookupBean("itemauthor");
     ItemBean item = itemauthorbean.getCurrentItem();
-    
+
+    ParameterUtil paramUtil = new ParameterUtil();
+
+    String rubricStateDetails = ContextUtil.lookupParam(SamigoConstants.RBCS_ASSOCIATION_STATE_DETAILS);
+
     item.setEmiVisibleItems("0");
     String iText = item.getItemText();
     String iInstruction = item.getInstruction();
@@ -154,6 +166,7 @@ public class ItemAddListener
     	if (!iType.equals(TypeFacade.CALCULATED_QUESTION.toString()) && !iType.equals(TypeFacade.IMAGEMAP_QUESTION.toString()) ) {
 			String emptyText_err = ContextUtil.getLocalizedString("org.sakaiproject.tool.assessment.bundle.AuthorMessages","emptyText_error");     
 			context.addMessage(null,new FacesMessage(emptyText_err));
+			itemauthorbean.setRubricStateDetails(rubricStateDetails);
 			return;
     	}
     }   
@@ -184,6 +197,7 @@ public class ItemAddListener
 	}
     
     if(error) { 
+    	itemauthorbean.setRubricStateDetails(rubricStateDetails);
     	return;
     }
     
@@ -194,7 +208,8 @@ public class ItemAddListener
 	    err = ContextUtil.getLocalizedString("org.sakaiproject.tool.assessment.bundle.AuthorMessages","corrAnswer");
 	    context.addMessage(null,new FacesMessage(err));
 	    item.setOutcome("surveyItem");
-		item.setPoolOutcome("surveyItem");
+	    item.setPoolOutcome("surveyItem");
+	    itemauthorbean.setRubricStateDetails(rubricStateDetails);
 	    return;
       }
     }
@@ -206,7 +221,8 @@ public class ItemAddListener
 	    err = ContextUtil.getLocalizedString("org.sakaiproject.tool.assessment.bundle.AuthorMessages","corrAnswer");
 	    context.addMessage(null,new FacesMessage(err));
 	    item.setOutcome("trueFalseItem");
-		item.setPoolOutcome("trueFalseItem");
+	    item.setPoolOutcome("trueFalseItem");
+	    itemauthorbean.setRubricStateDetails(rubricStateDetails);
 	    return;
       }
     }
@@ -218,6 +234,7 @@ public class ItemAddListener
     		context.addMessage(null,new FacesMessage(err));
     		item.setOutcome("fillInBlackItem");
     		item.setPoolOutcome("fillInBlackItem");
+    		itemauthorbean.setRubricStateDetails(rubricStateDetails);
     		return;
     	}
     }
@@ -229,6 +246,7 @@ public class ItemAddListener
     	    context.addMessage(null,new FacesMessage(err));
     	    item.setOutcome("fillInNumericItem");
     	    item.setPoolOutcome("fillInNumericItem");
+    	    itemauthorbean.setRubricStateDetails(rubricStateDetails);
     	    return;
 
     	}
@@ -247,6 +265,7 @@ public class ItemAddListener
     	    context.addMessage(null,new FacesMessage(err));
     	    item.setOutcome("audioRecItem");
     	    item.setPoolOutcome("audioRecItem");
+    	    itemauthorbean.setRubricStateDetails(rubricStateDetails);
     	    return;
 		}    	
     }
@@ -257,6 +276,7 @@ public class ItemAddListener
     		context.addMessage(null,new FacesMessage(err));
     		item.setOutcome("matrixChoicesSurveyItem");
     		item.setPoolOutcome("matrixChoicesSurveyItem");
+    		itemauthorbean.setRubricStateDetails(rubricStateDetails);
     		return;
     	}
     	if (isColumnslessthan2()) {
@@ -264,6 +284,7 @@ public class ItemAddListener
     		context.addMessage(null,new FacesMessage(err));
     		item.setOutcome("matrixChoicesSurveyItem");
     		item.setPoolOutcome("matrixChoicesSurveyItem");
+    		itemauthorbean.setRubricStateDetails(rubricStateDetails);
     		return;
     	}
     } 
@@ -285,6 +306,7 @@ public class ItemAddListener
         if(error) {
             item.setOutcome("calculatedQuestion");
             item.setPoolOutcome("calculatedQuestion");
+            itemauthorbean.setRubricStateDetails(rubricStateDetails);
             return;
         }
         
@@ -314,11 +336,22 @@ public class ItemAddListener
    		error=true;
    	    
     	}
-   	 if(error)
+   	 if(error) {
+   		itemauthorbean.setRubricStateDetails(rubricStateDetails);
    		return;
+   	 }
     }
 	try {
 		saveItem(itemauthorbean);
+
+		// RUBRICS, save the binding between the assignment and the rubric
+		if (publishedSettings.getAssessmentId() == null) {
+			String associationId = assessmentSettings.getAssessmentId().toString() + "." + itemauthorbean.getItemId();
+			rubricsService.saveRubricAssociation(SamigoConstants.RBCS_TOOL_ID, associationId, paramUtil.getRubricConfigurationParameters(null));
+		} else {
+			String pubAssociationId = SamigoConstants.RBCS_PUBLISHED_ASSESSMENT_ENTITY_PREFIX + publishedSettings.getAssessmentId().toString() + "." + itemauthorbean.getItemId();
+			rubricsService.saveRubricAssociation(SamigoConstants.RBCS_TOOL_ID, pubAssociationId, paramUtil.getRubricConfigurationParameters(null));
+		}
 	}
 	catch (FinFormatException e) {
 		err=ContextUtil.getLocalizedString("org.sakaiproject.tool.assessment.bundle.AuthorMessages","fin_invalid_characters_error");

@@ -146,6 +146,10 @@ public class ItemAuthorBean
 
   private String language;
 
+  // Rubrics
+  private String rbcsToken;
+  private String rubricStateDetails;
+
   public String getLanguage() {
     Locale loc = new ResourceLoader().getLocale();
     this.language = loc.getLanguage();
@@ -1602,4 +1606,19 @@ public class ItemAuthorBean
         }
     }
 
+    public String getRbcsToken() {
+        return rbcsToken;
+    }
+
+    public void setRbcsToken(String rbcsToken) {
+        this.rbcsToken = rbcsToken;
+    }
+
+    public String getRubricStateDetails() {
+        return rubricStateDetails;
+    }
+
+    public void setRubricStateDetails(String rubricStateDetails) {
+        this.rubricStateDetails = rubricStateDetails;
+    }
 }
