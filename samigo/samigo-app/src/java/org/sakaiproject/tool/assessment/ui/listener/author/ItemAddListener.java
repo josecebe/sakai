@@ -139,8 +139,6 @@ public class ItemAddListener
 
     ParameterUtil paramUtil = new ParameterUtil();
 
-    String rubricStateDetails = ContextUtil.lookupParam(SamigoConstants.RBCS_ASSOCIATION_STATE_DETAILS);
-
     item.setEmiVisibleItems("0");
     String iText = item.getItemText();
     String iInstruction = item.getInstruction();
@@ -166,7 +164,6 @@ public class ItemAddListener
     	if (!iType.equals(TypeFacade.CALCULATED_QUESTION.toString()) && !iType.equals(TypeFacade.IMAGEMAP_QUESTION.toString()) ) {
 			String emptyText_err = ContextUtil.getLocalizedString("org.sakaiproject.tool.assessment.bundle.AuthorMessages","emptyText_error");     
 			context.addMessage(null,new FacesMessage(emptyText_err));
-			itemauthorbean.setRubricStateDetails(rubricStateDetails);
 			return;
     	}
     }   
@@ -197,7 +194,6 @@ public class ItemAddListener
 	}
     
     if(error) { 
-    	itemauthorbean.setRubricStateDetails(rubricStateDetails);
     	return;
     }
     
@@ -209,7 +205,6 @@ public class ItemAddListener
 	    context.addMessage(null,new FacesMessage(err));
 	    item.setOutcome("surveyItem");
 	    item.setPoolOutcome("surveyItem");
-	    itemauthorbean.setRubricStateDetails(rubricStateDetails);
 	    return;
       }
     }
@@ -222,7 +217,6 @@ public class ItemAddListener
 	    context.addMessage(null,new FacesMessage(err));
 	    item.setOutcome("trueFalseItem");
 	    item.setPoolOutcome("trueFalseItem");
-	    itemauthorbean.setRubricStateDetails(rubricStateDetails);
 	    return;
       }
     }
@@ -234,7 +228,6 @@ public class ItemAddListener
     		context.addMessage(null,new FacesMessage(err));
     		item.setOutcome("fillInBlackItem");
     		item.setPoolOutcome("fillInBlackItem");
-    		itemauthorbean.setRubricStateDetails(rubricStateDetails);
     		return;
     	}
     }
@@ -246,7 +239,6 @@ public class ItemAddListener
     	    context.addMessage(null,new FacesMessage(err));
     	    item.setOutcome("fillInNumericItem");
     	    item.setPoolOutcome("fillInNumericItem");
-    	    itemauthorbean.setRubricStateDetails(rubricStateDetails);
     	    return;
 
     	}
@@ -265,7 +257,6 @@ public class ItemAddListener
     	    context.addMessage(null,new FacesMessage(err));
     	    item.setOutcome("audioRecItem");
     	    item.setPoolOutcome("audioRecItem");
-    	    itemauthorbean.setRubricStateDetails(rubricStateDetails);
     	    return;
 		}    	
     }
@@ -276,7 +267,6 @@ public class ItemAddListener
     		context.addMessage(null,new FacesMessage(err));
     		item.setOutcome("matrixChoicesSurveyItem");
     		item.setPoolOutcome("matrixChoicesSurveyItem");
-    		itemauthorbean.setRubricStateDetails(rubricStateDetails);
     		return;
     	}
     	if (isColumnslessthan2()) {
@@ -284,7 +274,6 @@ public class ItemAddListener
     		context.addMessage(null,new FacesMessage(err));
     		item.setOutcome("matrixChoicesSurveyItem");
     		item.setPoolOutcome("matrixChoicesSurveyItem");
-    		itemauthorbean.setRubricStateDetails(rubricStateDetails);
     		return;
     	}
     } 
@@ -306,7 +295,6 @@ public class ItemAddListener
         if(error) {
             item.setOutcome("calculatedQuestion");
             item.setPoolOutcome("calculatedQuestion");
-            itemauthorbean.setRubricStateDetails(rubricStateDetails);
             return;
         }
         
@@ -337,7 +325,6 @@ public class ItemAddListener
    	    
     	}
    	 if(error) {
-   		itemauthorbean.setRubricStateDetails(rubricStateDetails);
    		return;
    	 }
     }

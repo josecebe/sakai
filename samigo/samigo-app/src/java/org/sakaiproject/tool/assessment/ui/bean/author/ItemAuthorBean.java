@@ -52,6 +52,8 @@ import javax.servlet.ServletContext;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.commons.lang.StringUtils;
+
 import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.authz.api.SecurityAdvisor;
 import org.sakaiproject.authz.cover.SecurityService;
@@ -68,6 +70,7 @@ import org.sakaiproject.event.cover.NotificationService;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.exception.TypeException;
+import org.sakaiproject.samigo.util.SamigoConstants;
 import org.sakaiproject.tool.api.ToolSession;
 import org.sakaiproject.tool.assessment.data.ifc.assessment.AttachmentIfc;
 import org.sakaiproject.tool.assessment.data.ifc.assessment.ItemAttachmentIfc;
@@ -1615,7 +1618,11 @@ public class ItemAuthorBean
     }
 
     public String getRubricStateDetails() {
-        return rubricStateDetails;
+        if (StringUtils.isNotBlank(this.rubricStateDetails)) {
+            return this.rubricStateDetails;
+        }
+        this.rubricStateDetails = ContextUtil.lookupParam(SamigoConstants.RBCS_ASSOCIATION_STATE_DETAILS);
+        return this.rubricStateDetails;
     }
 
     public void setRubricStateDetails(String rubricStateDetails) {
