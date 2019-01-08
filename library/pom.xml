@@ -304,12 +304,16 @@
 				<sakai.skin.target>morpheus-default</sakai.skin.target>
 				<sakai.skin.customization.file>src/${sakai.skin.source}/sass/examples/_customization_example_empty.scss</sakai.skin.customization.file>
 				<sakai.skin.outputSyle>compressed</sakai.skin.outputSyle>
+				<sakai.skin.source.fvp>morpheus-fvp</sakai.skin.source.fvp>
+				<sakai.skin.target.fvp>morpheus-fvp</sakai.skin.target.fvp>
+				<sakai.skin.customization.file.fvp>src/${sakai.skin.source.fvp}/sass/examples/_customization_example_empty.scss</sakai.skin.customization.file.fvp>
 			</properties>
 			<build>
 				<plugins>
 					<plugin>
 						<artifactId>maven-resources-plugin</artifactId>
 						<executions>
+							<!-- Executions for default skin -->
 							<execution>
 								<id>copy-images</id>
 								<phase>compile</phase>
@@ -380,6 +384,78 @@
 									</resources>
 								</configuration>
 							</execution>
+
+							<!-- Executions for FVP skin -->
+							<execution>
+								<id>copy-images-fvp</id>
+								<phase>compile</phase>
+								<goals>
+									<goal>copy-resources</goal>
+								</goals>
+								<configuration>
+									<outputDirectory>${basedir}/src/webapp/skin/${sakai.skin.target.fvp}/images/</outputDirectory>
+									<resources>
+										<resource>
+											<directory>src/${sakai.skin.source.fvp}/images/</directory>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
+							<execution>
+								<id>copy-js-fvp</id>
+								<phase>generate-resources</phase>
+								<goals>
+									<goal>copy-resources</goal>
+								</goals>
+								<configuration>
+									<outputDirectory>${basedir}/src/webapp/skin/${sakai.skin.target.fvp}/js/</outputDirectory>
+									<resources>
+										<resource>
+											<directory>src/${sakai.skin.source.fvp}/js/</directory>
+											<includes>
+												<include>lib/**/*.js</include>
+												<include>ie/**/*.js</include>
+											</includes>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
+							<execution>
+								<id>copy-fonts-fvp</id>
+								<phase>generate-resources</phase>
+								<goals>
+									<goal>copy-resources</goal>
+								</goals>
+								<configuration>
+									<outputDirectory>${basedir}/src/webapp/skin/${sakai.skin.target.fvp}/fonts/</outputDirectory>
+									<resources>
+										<resource>
+											<directory>${basedir}/src/${sakai.skin.source.fvp}/font-awesome-sass-${font-awesome-version}/assets/fonts/</directory>
+										</resource>
+										<resource>
+										  <directory>${basedir}/src/${sakai.skin.source.fvp}/bootstrap-sass-${bootstrap-version}/assets/fonts/</directory>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
+							<execution>
+								<id>copy-fonts-css-fvp</id>
+								<phase>generate-resources</phase>
+								<goals>
+									<goal>copy-resources</goal>
+								</goals>
+								<configuration>
+									<outputDirectory>${basedir}/src/webapp/skin/${sakai.skin.target.fvp}/font-awesome/</outputDirectory>
+									<resources>
+										<resource>
+											<directory>src/${sakai.skin.source.fvp}/fonts/</directory>
+											<includes>
+												<include>*.css</include>
+											</includes>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
 						</executions>
 					</plugin>
 					<plugin>
@@ -387,90 +463,168 @@
 						<artifactId>yuicompressor-maven-plugin</artifactId>
 						<version>1.5.1</version>
 						<executions>
+							<!--  Executions for default skin -->
 							<execution>
+								<id>compress-js</id>
 								<goals>
 									<goal>compress</goal>
 								</goals>
+								<configuration>
+									<force>true</force>
+									<nosuffix>true</nosuffix>
+									<sourceDirectory>${basedir}/src/${sakai.skin.source}/js/</sourceDirectory>
+									<outputDirectory>${project.build.directory}/js/</outputDirectory>
+									<aggregations>
+										<aggregation>
+											<inputDir>${project.build.directory}/js/src/</inputDir>
+											<includes>
+												<include>**/*.js</include>
+											</includes>
+											<output>${project.build.directory}/${project.build.finalName}/skin/${sakai.skin.target}/js/morpheus.scripts.min.js</output>
+										</aggregation>
+										<aggregation>
+											<inputDir>src/webapp/editor/elfinder/sakai/js/src</inputDir>
+											<includes>
+												<include>sakai.js</include>
+												<include>query.js</include>
+												<include>tools.js</include>
+												<include>ui.js</include>
+												<include>resizer.js</include>
+												<include>options.js</include>
+												<include>editors.js</include>
+												<include>confirm.js</include>
+												<include>i18n.js</include>
+												<include>init.js</include>
+											</includes>
+											<output>${project.build.directory}/${project.build.finalName}/editor/elfinder/sakai/js/sakai-elfinder.min.js</output>
+										</aggregation>
+									</aggregations>
+								</configuration>
+							</execution>
+
+							<!--  Executions for FVP skin -->
+							<execution>
+								<id>compress-js-fvp</id>
+								<goals>
+									<goal>compress</goal>
+								</goals>
+								<configuration>
+									<force>true</force>
+									<nosuffix>true</nosuffix>
+									<sourceDirectory>${basedir}/src/${sakai.skin.source.fvp}/js/</sourceDirectory>
+									<outputDirectory>${project.build.directory}/js/</outputDirectory>
+									<aggregations>
+										<aggregation>
+											<inputDir>${project.build.directory}/js/src/</inputDir>
+											<includes>
+												<include>**/*.js</include>
+											</includes>
+											<output>${project.build.directory}/${project.build.finalName}/skin/${sakai.skin.target.fvp}/js/morpheus.scripts.min.js</output>
+										</aggregation>
+										<aggregation>
+											<inputDir>src/webapp/editor/elfinder/sakai/js/src</inputDir>
+											<includes>
+												<include>sakai.js</include>
+												<include>query.js</include>
+												<include>tools.js</include>
+												<include>ui.js</include>
+												<include>resizer.js</include>
+												<include>options.js</include>
+												<include>editors.js</include>
+												<include>confirm.js</include>
+												<include>i18n.js</include>
+												<include>init.js</include>
+											</includes>
+											<output>${project.build.directory}/${project.build.finalName}/editor/elfinder/sakai/js/sakai-elfinder.min.js</output>
+										</aggregation>
+									</aggregations>
+								</configuration>
 							</execution>
 						</executions>
-						<configuration>
-							<force>true</force>
-							<nosuffix>true</nosuffix>
-							<sourceDirectory>${basedir}/src/${sakai.skin.source}/js/</sourceDirectory>
-							<outputDirectory>${project.build.directory}/js/</outputDirectory>
-							<aggregations>
-								<aggregation>
-									<inputDir>${project.build.directory}/js/src/</inputDir>
-									<includes>
-										<include>**/*.js</include>
-									</includes>
-									<output>${project.build.directory}/${project.build.finalName}/skin/${sakai.skin.target}/js/morpheus.scripts.min.js</output>
-								</aggregation>
-								<aggregation>
-									<inputDir>src/webapp/editor/elfinder/sakai/js/src</inputDir>
-									<includes>
-										<include>sakai.js</include>
-										<include>query.js</include>
-										<include>tools.js</include>
-										<include>ui.js</include>
-										<include>resizer.js</include>
-										<include>options.js</include>
-										<include>editors.js</include>
-										<include>confirm.js</include>
-										<include>i18n.js</include>
-										<include>init.js</include>
-									</includes>
-									<output>${project.build.directory}/${project.build.finalName}/editor/elfinder/sakai/js/sakai-elfinder.min.js</output>
-								</aggregation>
-							</aggregations>
-						</configuration>
 					</plugin>
 					<plugin>
 					   <groupId>com.github.warmuuh</groupId>
 					   <artifactId>libsass-maven-plugin</artifactId>
 					   <version>0.2.6-libsass_3.4.0</version>
 					   <executions>
+					       <!--  Executions for default skin -->
 					       <execution>
+					           <id>sass-default</id>
 					           <phase>process-resources</phase>
 					           <goals>
 					               <goal>compile</goal>
 					           </goals>
+							   <configuration>
+							       <outputStyle>${sakai.skin.outputSyle}</outputStyle>
+							       <imgPath>${basedir}/src/${sakai.skin.source}/images/</imgPath>
+							       <inputPath>${basedir}/src/${sakai.skin.source}/sass/</inputPath>
+							       <outputPath>${basedir}/src/webapp/skin/${sakai.skin.target}</outputPath>
+							       <includePath>${basedir}/src/${sakai.skin.source}/bootstrap-sass-${bootstrap-version}/assets/stylesheets/${path.separator}${basedir}/src/${sakai.skin.source}/font-awesome-sass-${font-awesome-version}/assets/stylesheets/</includePath>
+							       <sourceMapOutputPath>${basedir}/src/webapp/skin/${sakai.skin.target}</sourceMapOutputPath>
+							   </configuration>
+					       </execution>
+
+					       <!--  Executions for FVP skin -->
+					       <execution>
+					           <id>sass-default-fvp</id>
+					           <phase>process-resources</phase>
+					           <goals>
+					               <goal>compile</goal>
+					           </goals>
+							   <configuration>
+							       <outputStyle>${sakai.skin.outputSyle}</outputStyle>
+							       <imgPath>${basedir}/src/${sakai.skin.source.fvp}/images/</imgPath>
+							       <inputPath>${basedir}/src/${sakai.skin.source.fvp}/sass/</inputPath>
+							       <outputPath>${basedir}/src/webapp/skin/${sakai.skin.target.fvp}</outputPath>
+							       <includePath>${basedir}/src/${sakai.skin.source.fvp}/bootstrap-sass-${bootstrap-version}/assets/stylesheets/${path.separator}${basedir}/src/${sakai.skin.source.fvp}/font-awesome-sass-${font-awesome-version}/assets/stylesheets/</includePath>
+							       <sourceMapOutputPath>${basedir}/src/webapp/skin/${sakai.skin.target.fvp}</sourceMapOutputPath>
+							   </configuration>
 					       </execution>
 					   </executions>
-					   <configuration>
-					       <outputStyle>${sakai.skin.outputSyle}</outputStyle>
-					       <imgPath>${basedir}/src/${sakai.skin.source}/images/</imgPath>
-					       <inputPath>${basedir}/src/${sakai.skin.source}/sass/</inputPath>
-					       <outputPath>${basedir}/src/webapp/skin/${sakai.skin.target}</outputPath>
-					       <includePath>${basedir}/src/${sakai.skin.source}/bootstrap-sass-${bootstrap-version}/assets/stylesheets/${path.separator}${basedir}/src/${sakai.skin.source}/font-awesome-sass-${font-awesome-version}/assets/stylesheets/</includePath>
-					       <sourceMapOutputPath>${basedir}/src/webapp/skin/${sakai.skin.target}</sourceMapOutputPath>
-					   </configuration>
 					</plugin>
 					<plugin>
 						<artifactId>maven-clean-plugin</artifactId>
 						<version>2.6.1</version>
 						<executions>
+							<!--  Executions for default skin -->
 							<execution>
 								<id>remove-skin</id>
 								<phase>clean</phase>
 								<goals>
 									<goal>clean</goal>
 								</goals>
+								<configuration>
+									<filesets>
+										<fileset>
+											<directory>${basedir}/src/webapp/skin/${sakai.skin.target}</directory>
+										</fileset>
+									</filesets>
+								</configuration>
+							</execution>
+
+							<!--  Executions for FVP skin -->
+							<execution>
+								<id>remove-skin-fvp</id>
+								<phase>clean</phase>
+								<goals>
+									<goal>clean</goal>
+								</goals>
+								<configuration>
+									<filesets>
+										<fileset>
+											<directory>${basedir}/src/webapp/skin/${sakai.skin.target.fvp}</directory>
+										</fileset>
+									</filesets>
+								</configuration>
 							</execution>
 						</executions>
-						<configuration>
-							<filesets>
-								<fileset>
-									<directory>${basedir}/src/webapp/skin/${sakai.skin.target}</directory>
-								</fileset>
-							</filesets>
-						</configuration>
 					</plugin>
 					<plugin>
 						<groupId>com.coderplus.maven.plugins</groupId>
 						<artifactId>copy-rename-maven-plugin</artifactId>
 						<version>1.0</version>
 						<executions>
+							<!--  Executions for default skin -->
 							<execution>
 								<id>copy-customizations</id>
 								<phase>generate-resources</phase>
@@ -480,6 +634,19 @@
 								<configuration>
 									<sourceFile>${sakai.skin.customization.file}</sourceFile>
 									<destinationFile>${basedir}/src/${sakai.skin.source}/sass/_customization.scss</destinationFile>
+								</configuration>
+							</execution>
+
+							<!--  Executions for FVP skin -->
+							<execution>
+								<id>copy-customizations-fvp</id>
+								<phase>generate-resources</phase>
+								<goals>
+									<goal>copy</goal>
+								</goals>
+								<configuration>
+									<sourceFile>${sakai.skin.customization.file.fvp}</sourceFile>
+									<destinationFile>${basedir}/src/${sakai.skin.source.fvp}/sass/_customization.scss</destinationFile>
 								</configuration>
 							</execution>
 						</executions>
