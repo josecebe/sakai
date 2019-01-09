@@ -21,18 +21,27 @@ body.is-logged-out{
 
 	.#{$namespace}headerLogo{
 		width: 100%;
-		padding: 0 $standard-spacing;
+		padding: 0 $standard-spacing 0 32px;
 		height: $banner-height;
 		background: $top-header-background;
-
+		border-bottom: 4px solid $fvp-orange;
 		text-align: center;
 		@include transition( width 0.5s linear 0s );
 		.#{$namespace}headerLogo--institution{
+			background: url($logo-inst) no-repeat center center;
+			width: 		$logo-inst-width;
+			height: 100%; // align vertically center
+			float: left;
+			background-size: $logo-inst-width $logo-inst-height;
+			margin-top: -5px;
+			margin-right: 35px;
+		}
+		.#{$namespace}headerLogo--banner{
 			background: url($logo) no-repeat center center;
 			width: 		$logo-width;
 			height: 100%; // align vertically center
 			float: left;
-			background-size: $logo-width $logo-height;
+			background-size: $logo-width $logo-height;	
 		}
 	}
 
@@ -772,7 +781,7 @@ body.is-logged-out{
 	@include display-flex;
 	@include align-items(center);
 	background-color: $sites-nav-background;
-	min-height: $banner-height;
+	min-height: $sites-banner-height;
 	padding: 0 $standard-spacing;		// space on the sides; top and bottom spacing will be determined by children
 }
 
@@ -1024,7 +1033,7 @@ body.is-logged-out{
 					border-top: $sites-nav-menu-item-selected-border-top;
 					border-right: $sites-nav-menu-item-selected-border-right;
 					border-bottom: $sites-nav-menu-item-selected-border-bottom;
-					border-left: $sites-nav-menu-item-selected-border-left;
+					border-left: 1px solid #D67209;
 					color: $sites-nav-menu-item-selected-icon-color;
 					
 					&:hover {

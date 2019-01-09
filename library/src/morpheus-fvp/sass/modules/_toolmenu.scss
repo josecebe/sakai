@@ -424,7 +424,7 @@ nav#subSites{
 					background: $tool-menu-item-hover-background-color;
 
 					&:before{
-						border-left: $tool-menu-item-hover-border-left;
+						//border-left: $tool-menu-item-hover-border-left;
 					}
 
 					.#{$namespace}toolsNav__menuitem--icon{
@@ -536,8 +536,18 @@ nav#subSites{
 					color: $tool-menu-item-selected-text-color;
 					background: $tool-menu-item-selected-background-color;
 
-					&:before{
-						border-left: $tool-menu-item-selected-border-left;
+					&:before {
+						content: " ";
+						width: 0;
+						height: 0;
+						border-top: 15px solid transparent;
+						border-bottom: 15px solid transparent;
+						border-right: 15px solid #ffffff;
+						position: absolute;
+						top: 0;
+						bottom: 0;
+						left: calc(100% - 15px);
+						margin-top: 5px;
 					}
 
 					.#{$namespace}toolsNav__menuitem--icon{
@@ -553,7 +563,7 @@ nav#subSites{
 						background: $tool-menu-item-selected-hover-background-color;
 
 						&:before{
-							border-left: $tool-menu-item-selected-hover-border-left;
+							//border-left: $tool-menu-item-selected-hover-border-left;
 						}
 
 						.#{$namespace}toolsNav__menuitem--icon{
