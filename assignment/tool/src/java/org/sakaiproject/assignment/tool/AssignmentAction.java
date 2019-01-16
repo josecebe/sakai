@@ -2628,7 +2628,11 @@ public class AssignmentAction extends PagedResourceActionII {
         context.put("value_UseReviewService", state.getAttribute(NEW_ASSIGNMENT_USE_REVIEW_SERVICE));
         if (!contentReviewService.allowAllContent()) {
             String fileTypesMessage = getContentReviewAcceptedFileTypesMessage();
-            String contentReviewNote = rb.getFormattedMessage("content_review.note", new Object[]{fileTypesMessage});
+            Object[] params = new Object[3];
+            params[0] = fileTypesMessage;
+            params[1] = rb.getString("content_review.extension");
+            params[2] = rb.getFormattedMessage("content_review.maxsize", new Object[]{100});
+            String contentReviewNote = rb.getFormattedMessage("content_review.note", params);
             context.put("content_review_note", contentReviewNote);
         }
         context.put("turnitin_forceSingleAttachment", serverConfigurationService.getBoolean("turnitin.forceSingleAttachment", false));
