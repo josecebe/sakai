@@ -70,6 +70,15 @@
 	}
 	</script>
 
+	<script>
+		document.addEventListener("DOMContentLoaded", function(event){ 
+            $('#resourceTabs a').click(function (e) {
+                e.preventDefault();
+                $(this).tab('show');
+            });
+        });
+    </script>
+
 	<form name="attachForm" id="attachForm" action="#toolForm("FilePickerAction" "Main")" method="post" enctype="multipart/form-data">
 		<input type="hidden" name="source" value="0" />
 		<input type="hidden" name="collectionId" value="$validator.escapeHtml($collectionId)" />
@@ -146,7 +155,7 @@
 			
 		</div>
 
-		<hr class="itemSeparator" />
+		<hr class="itemSeparator" />											
         ###################### Find top level
         #set($topItem = "")
         #set($collectionPathSize = 0)
@@ -156,37 +165,61 @@
         #if($collectionPathSize > 1)
             #set($topItem = $collectionPath.get(1).id)
         #end
-        
+		
+		
+		
+		<!------------------------------------------------HEARE------------------------------------------------------->		
+		
+		
+		<ul class="nav nav-tabs" id="resourceTabs">
+			<li class="nav-item active">
+				<a class="nav-link" href="#submition">Select from resources</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="#submition2">Select from office 365</a>
+			</li>
+		</ul>
+		
+		
+		
+		<!---------------------------------------------------STOP---------------------------------------------------->				
+		
+		
+		
 		######################  Page Title / Breadcrumbs  ##############
 		<div class="highlightPanel">
-			<h4>
-				$tlang.getString("att.res")
-			</h4>
-			<div class ="breadCrumb">
-				<h3>
-				$tlang.getString("gen.location")
-				<span class="$contentTypeImageService.getContentTypeImageClass("folder")" aria-hidden="true"></span>
-				<span class="sr-only">$tlang.getString('gen.folder1')</span>
-				#foreach ($item in $collectionPath)
-					#if($item.isLast())
-						$validator.escapeHtml("$item.name")
-						#if($upOneLevel)
-							<a href="#toolLinkParam("FilePickerAction" "doNavigate" "collectionId=$validator.escapeUrl($upOneLevel.id)&navRoot=$validator.escapeUrl($upOneLevel.root)")" title= "$tlang.getString('sh.one')">
-								<span class="fa fa-level-up" aria-hidden="true"></span>
-								<span class="sr-only">$tlang.getString('sh.one')</span>
-							</a>
+			<div class="tab-content">
+        		<div role="tabpanel" class="tab-pane active" id="submition">
+					<h4>
+						$tlang.getString("att.res")
+					</h4>
+					<div class ="breadCrumb">
+						<h3>
+						$tlang.getString("gen.location")
+						<span class="$contentTypeImageService.getContentTypeImageClass("folder")" aria-hidden="true"></span>
+						<span class="sr-only">$tlang.getString('gen.folder1')</span>
+						#foreach ($item in $collectionPath)
+							#if($item.isLast())
+								$validator.escapeHtml("$item.name")
+								#if($upOneLevel)
+									<a href="#toolLinkParam("FilePickerAction" "doNavigate" "collectionId=$validator.escapeUrl($upOneLevel.id)&navRoot=$validator.escapeUrl($upOneLevel.root)")" title= "$tlang.getString('sh.one')">
+										<span class="fa fa-level-up" aria-hidden="true"></span>
+										<span class="sr-only">$tlang.getString('sh.one')</span>
+									</a>
+								#end
+							#else
+								<a href="#toolLinkParam("FilePickerAction" "doNavigate" "collectionId=$validator.escapeUrl($item.id)&navRoot=$validator.escapeUrl($item.root)")" title ="$tlang.getString('sh.go')">
+									$validator.escapeHtml("$item.name")
+								</a> /
+								#set($upOneLevel = $item)
+							#end
 						#end
-					#else
-						<a href="#toolLinkParam("FilePickerAction" "doNavigate" "collectionId=$validator.escapeUrl($item.id)&navRoot=$validator.escapeUrl($item.root)")" title ="$tlang.getString('sh.go')">
-							$validator.escapeHtml("$item.name")
-						</a> /
-						#set($upOneLevel = $item)
-					#end
-				#end
-				</h3>
-			</div>		
+						</h3>
+					</div>		
+				
 		######################  Heirarchical list of resource folders/items  ##############
-
+<!------------------------------------------------------------------------------------ CORTAR MITAD --------------------------------------->
+		
 		<table class="listHier lines" cellspacing="0" border="0" summary="$tlang.getString("att.listsum")">
 			######################  Column labels, sort controls, expand/collapse all  ##############
 			<caption class="skip" style="display:none">$tlang.getString("att.listcap")</caption>
@@ -509,6 +542,8 @@
 			#end
 			############################################# end of "Other sites" section 
 		</table>
+		</div>
+		<div role="tabpanel" class="tab-pane" id="submition2">
 
 			############################################# Begin Office section
 			#if($!officeOn)
@@ -577,8 +612,9 @@
 					</table>
 				#end
 			#end
+			</div>
 			############################################# end of Office section 
-		
+			</div>
 		<p class="act" >
 			<input type="button" name="attachButton2" id="attachButton2"  accesskey="s"
 				onclick="SPNR.disableControlsAndSpin( this, null ); document.getElementById('attachForm').action='#toolLink("FilePickerAction" "doAddattachments")'; submitform('attachForm');" 
