@@ -153,9 +153,9 @@
 					value="$tlang.getString("att.cancel")"  />
 			</p>
 			
-		</div>
+		</div>	
 
-		<hr class="itemSeparator" />											
+		<hr class="itemSeparator" />								
         ###################### Find top level
         #set($topItem = "")
         #set($collectionPathSize = 0)
@@ -165,31 +165,20 @@
         #if($collectionPathSize > 1)
             #set($topItem = $collectionPath.get(1).id)
         #end
-		
-		
-		
-		<!------------------------------------------------HEARE------------------------------------------------------->		
-		
-		
+
 		<ul class="nav nav-tabs" id="resourceTabs">
 			<li class="nav-item active">
-				<a class="nav-link" href="#submition">Select from resources</a>
+				<a class="nav-link" href="#submition">$tlang.getString("resource.picker.default")</a>
 			</li>
 			<li class="nav-item">
-				<a class="nav-link" href="#submition2">Select from office 365</a>
+				<a class="nav-link" href="#submition2">$tlang.getString("resource.picker.onedrive")</a>
 			</li>
 		</ul>
-		
-		
-		
-		<!---------------------------------------------------STOP---------------------------------------------------->				
-		
-		
-		
+
 		######################  Page Title / Breadcrumbs  ##############
 		<div class="highlightPanel">
 			<div class="tab-content">
-        		<div role="tabpanel" class="tab-pane active" id="submition">
+				<div role="tabpanel" class="tab-pane active" id="submition">
 					<h4>
 						$tlang.getString("att.res")
 					</h4>
@@ -218,7 +207,6 @@
 					</div>		
 				
 		######################  Heirarchical list of resource folders/items  ##############
-<!------------------------------------------------------------------------------------ CORTAR MITAD --------------------------------------->
 		
 		<table class="listHier lines" cellspacing="0" border="0" summary="$tlang.getString("att.listsum")">
 			######################  Column labels, sort controls, expand/collapse all  ##############
