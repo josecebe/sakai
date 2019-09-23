@@ -66,7 +66,7 @@ public class MainController {
 		return "index";
 	}
 
-	@RequestMapping(value = {"/date-manager/update", "/index"}, method = RequestMethod.POST, produces = "application/json")
+	@RequestMapping(value = {"/date-manager/update"}, method = RequestMethod.POST, produces = "application/json")
 	public @ResponseBody String dateManagerUpdate(HttpServletRequest req, Model model) {
 		String jsonResponse = "";
 		try {
