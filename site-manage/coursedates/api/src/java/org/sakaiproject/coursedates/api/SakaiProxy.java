@@ -14,6 +14,7 @@ public interface SakaiProxy {
 	public String getCurrentSiteId();
 	public Locale getUserLocale();
 	public Instant parseStringToInstant(String timestamp, TimeZone userTimeZone);
+	public boolean currentSiteContainsTool(String commonId);
 
 	// Assignments methods
 	public JSONArray getAssignmentsForContext(String siteId);

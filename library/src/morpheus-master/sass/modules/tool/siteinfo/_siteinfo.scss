@@ -31,53 +31,78 @@
 		padding-right: 0.5em;
 	}
 	#date-manager-form {
-		.panel-title {
-			a {
-				text-decoration: none;
+		.panel-heading {
+			padding: 0;
 
-				&::before {
-					font-family: FontAwesome;
-					margin-right: 5px;
-					width: 15px;
-					display: inline-block;
-				}
-				&[aria-expanded=true] {
+			.panel-title {
+				padding: 0;
+
+				a {
+					padding: 13.2px 15px;
+					display: block;
+					text-decoration: none;
+
 					&::before {
-						content: "\f063";
+						font-family: FontAwesome;
+						margin-right: 5px;
+						width: 15px;
+						display: inline-block;
+					}
+					&[aria-expanded=true] {
+						&::before {
+							content: "\f063";
+						}
+					}
+					&:not([aria-expanded=true]) {
+						&::before {
+							content: "\f061";
+						}	
+					}
+
+					span {
+						text-decoration: underline;
 					}
 				}
-				&:not([aria-expanded=true]) {
-					&::before {
-						content: "\f061";
-					}	
-				}
+			}
+		}
 
-				span {
-					text-decoration: underline;
-				}
+		.panel-body {
+			> p:last-of-type {
+				margin-bottom: 0;
 			}
 		}
 
 		.table-coursedates {
 			margin-bottom: 0;
+			table-layout: fixed;
 
-			.datepicker {
-				width: calc(100% - 35px);
-				display: inline-block;
-				min-width: 200px;
+			td {
+				&.ajax-error {
+					background-color: $errorBanner-bgcolor;
+				}
+
+				> div {
+					position: relative;
+				}
+
+				.datepicker {
+					width: calc(100% - 35px);
+					display: inline-block;
+					min-width: initial !important;
+				}
+
+				.ui-datepicker-trigger {
+					position: absolute;
+					top: 0;
+					right: 0;
+				}
+
+				.day-of-week {
+					text-transform: capitalize;
+				}
+
 			}
 
-			.ui-datepicker-trigger {
-				margin-top: 1px;
-			}
-
-			.day-of-week {
-				text-transform: capitalize;
-			}
-
-			.ajax-error {
-				background-color: $errorBanner-bgcolor;
-			}
 		}
 
 		.modal {

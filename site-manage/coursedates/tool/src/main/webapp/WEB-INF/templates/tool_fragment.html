@@ -1,6 +1,7 @@
-<div th:fragment="tool_fragment" th:id="${collapseId}" class="panel-collapse collapse in">
+<div th:fragment="tool_fragment" th:id="${collapseId}" class="panel-collapse collapse">
 	<div class="panel-body">
-		<table class="table table-condensed table-striped table-bordered table-coursedates">
+		<p th:if="${items == null or items.isEmpty()}" th:text="#{items.empty}">There are no items to modify in this tool.</p>
+		<table th:unless="${items == null or items.isEmpty()}" class="table table-condensed table-striped table-bordered table-coursedates">
 			<thead>
 				<tr>
 					<th th:text="#{column.title}">Title</th>
@@ -26,11 +27,12 @@
 								<div><small class="text-muted day-of-week"></small></div>
 								<div><small class="errors"></small></div>
 							</div>
-						</td>						
+						</td>
 						<td th:switch="${toolId}">
 							<div th:case="'lessons'"></div>
 							<div th:case="*">
 								<input type="text" class="form-control datepicker" />
+								<input type="text" class="hidden" th:value="${item.due_date}" />
 								<input type="hidden" th:value="${item.due_date}" th:attr="data-idx=${iter.index},data-tool=${toolId}" data-field="due_date" />
 								<div><small class="text-muted day-of-week"></small></div>
 								<div><small class="errors"></small></div>

@@ -1,8 +1,6 @@
 package org.sakaiproject.coursedates.api.model;
 
 import java.time.Instant;
-import lombok.Getter;
-import lombok.Setter;
 
 public class CourseDatesUpdate {
 	public Object object;

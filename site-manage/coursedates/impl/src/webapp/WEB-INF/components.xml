@@ -15,7 +15,7 @@
 		<property name="gradebookService" ref="org.sakaiproject.service.gradebook.GradebookService"/>
 		<property name="signupService" ref="org.sakaiproject.signup.logic.SignupMeetingService"/>
 		<property name="contentHostingService" ref="org.sakaiproject.content.api.ContentHostingService"/>
-		<property name="calendarService" ref="org.sakaiproject.calendar.api.CalendarService" />	
+		<property name="calendarService" ref="org.sakaiproject.calendar.api.CalendarService" />
 		<property name="timeService" ref="org.sakaiproject.time.api.TimeService" />
 		<property name="forumManager" ref="org.sakaiproject.api.app.messageforums.MessageForumsForumManager" />
 		<property name="announcementService" ref="org.sakaiproject.announcement.api.AnnouncementService" />
@@ -23,5 +23,6 @@
 		<property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
 		<property name="serverConfigurationService" ref="org.sakaiproject.component.api.ServerConfigurationService" />
 		<property name="simplePageToolDao" ref="org.sakaiproject.lessonbuildertool.model.SimplePageToolDao" />
+		<property name="userTimeService" ref="org.sakaiproject.time.api.UserTimeService"/>
 	</bean>
 </beans>

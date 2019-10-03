@@ -1,5 +1,6 @@
 package org.sakaiproject.coursedates.impl;
 
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -41,6 +42,7 @@ import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.ContentCollectionEdit;
 import org.sakaiproject.content.api.ContentEntity;
 import org.sakaiproject.content.api.ContentResourceEdit;
+import org.sakaiproject.coursedates.api.CourseDatesConstants;
 import org.sakaiproject.coursedates.api.SakaiProxy;
 import org.sakaiproject.coursedates.api.model.CourseDatesUpdate;
 import org.sakaiproject.coursedates.api.model.CourseDatesValidation;
@@ -57,12 +59,12 @@ import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.time.api.Time;
 import org.sakaiproject.time.api.TimeService;
+import org.sakaiproject.time.api.UserTimeService;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.tool.assessment.data.dao.assessment.AssessmentData;
 import org.sakaiproject.tool.assessment.data.ifc.assessment.AssessmentAccessControlIfc;
 import org.sakaiproject.tool.assessment.facade.AssessmentFacade;
-import org.sakaiproject.tool.assessment.facade.AssessmentFacadeQueries;
 import org.sakaiproject.tool.assessment.facade.AssessmentFacadeQueriesAPI;
 import org.sakaiproject.tool.assessment.facade.PublishedAssessmentFacade;
 import org.sakaiproject.tool.assessment.facade.PublishedAssessmentFacadeQueries;
@@ -70,16 +72,11 @@ import org.sakaiproject.tool.assessment.facade.PublishedAssessmentFacadeQueriesA
 import org.sakaiproject.tool.assessment.services.PersistenceService;
 import org.sakaiproject.user.api.Preferences;
 import org.sakaiproject.user.api.PreferencesService;
-import org.sakaiproject.util.DateFormatterUtil;
 import org.sakaiproject.util.ResourceLoader;
 import org.sakaiproject.util.Validator;
-import org.sakaiproject.util.Web;
 
 @Slf4j
 public class SakaiProxyImpl implements SakaiProxy {
-
-	private static final String DATEPICKER_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
-	private static final String DATEPICKER_DATE_FORMAT = "yyyy-MM-dd";
 
 	@Setter private ToolManager toolManager;
 	@Setter private SessionManager sessionManager;
@@ -99,8 +96,10 @@ public class SakaiProxyImpl implements SakaiProxy {
 	@Setter private SiteService siteService;
 	@Setter private ServerConfigurationService serverConfigurationService;
 	@Setter private SimplePageToolDao simplePageToolDao;
+	@Setter private UserTimeService userTimeService;
 
-	private static ResourceLoader rb = new ResourceLoader("coursedates");
+	private static final ResourceLoader rb = new ResourceLoader("coursedates");
+	private final Map<String, Calendar> calendarMap = new HashMap<>();
 
 	public void init() {
 		setAssessmentServiceQueries(assessmentPersistenceService.getAssessmentFacadeQueries());
@@ -142,12 +141,18 @@ public class SakaiProxyImpl implements SakaiProxy {
 	private String getUrlForTool(String tool) {
 		try {
 			Site site = siteService.getSite(getCurrentSiteId());
-			//ServerConfigurationService.getServerUrl()+"/portal/site/"+siteId+"/tool/"+site.getToolForCommonId("sakai.zoom").getId();
 			return serverConfigurationService.getServerUrl()+"/portal/directtool/"+site.getToolForCommonId(tool).getId();
 		} catch(Exception e){
 			log.error("getUrlForTool : Error generating {} url {} ", tool, e);
 		}
 		return null;
+	}
+
+	private String formatToUserDateFormat(Date date) {
+		if (date == null) return "";
+		SimpleDateFormat df = new SimpleDateFormat(CourseDatesConstants.DATEPICKER_DATETIME_FORMAT);
+		df.setTimeZone(userTimeService.getLocalTimeZone());
+		return df.format(date);
 	}
 
 	@Override
@@ -161,7 +166,21 @@ public class SakaiProxyImpl implements SakaiProxy {
 		}
 	}
 
-	/** ASSIGNMENTS **/
+	@Override
+	public boolean currentSiteContainsTool(String commonId) {
+		try {
+			Site site = siteService.getSite(getCurrentSiteId());
+			return (site.getToolForCommonId(commonId) != null);
+		} catch(Exception e){
+			log.error("siteContainsTool : Cannot find site {}", getCurrentSiteId());
+		}
+		return false;
+	}
+
+	/***** ASSIGNMENTS *****/
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public JSONArray getAssignmentsForContext(String siteId) {
 		JSONArray jsonAssignments = new JSONArray();
@@ -173,10 +192,10 @@ public class SakaiProxyImpl implements SakaiProxy {
 				JSONObject assobj = new JSONObject();
 				assobj.put("id", assignment.getId());
 				assobj.put("title", assignment.getTitle());
-				assobj.put("due_date", DateFormatterUtil.format(Date.from(assignment.getDueDate()), DATEPICKER_DATETIME_FORMAT, userLocale));
-				assobj.put("open_date", DateFormatterUtil.format(Date.from(assignment.getOpenDate()), DATEPICKER_DATETIME_FORMAT, userLocale));
-				assobj.put("accept_until", DateFormatterUtil.format(Date.from(assignment.getCloseDate()), DATEPICKER_DATETIME_FORMAT, userLocale));
-				assobj.put("tool_title", "Assignments");
+				assobj.put("due_date", formatToUserDateFormat(Date.from(assignment.getDueDate())));
+				assobj.put("open_date", formatToUserDateFormat(Date.from(assignment.getOpenDate())));
+				assobj.put("accept_until", formatToUserDateFormat(Date.from(assignment.getCloseDate())));
+				assobj.put("tool_title", rb.getString("tool.assignments.title"));
 				assobj.put("url", assignmentService.getDeepLink(siteId, assignment.getId(), getCurrentUserId()));
 				assobj.put("extraInfo", "false");
 				jsonAssignments.add(assobj);
@@ -187,6 +206,9 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return jsonAssignments;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public CourseDatesValidation validateAssignments(String siteId, JSONArray assignments) throws Exception {
 		CourseDatesValidation assignmentValidate = new CourseDatesValidation();
@@ -195,68 +217,74 @@ public class SakaiProxyImpl implements SakaiProxy {
 
 		for (int i = 0; i < assignments.size(); i++) {
 			JSONObject jsonAssignment = (JSONObject)assignments.get(i);
-
 			String assignmentId = (String)jsonAssignment.get("id");
-			int idx = Integer.parseInt(jsonAssignment.get("idx").toString());
 
-			if (assignmentId == null) {
-				errors.add(new CourseDatesError("assignment", "Assignment could not be found", "assignments", "Assignments", idx));
-				continue;
+			try {
+				int idx = Integer.parseInt(jsonAssignment.get("idx").toString());
+
+				if (assignmentId == null) {
+					errors.add(new CourseDatesError("assignment", rb.getString("error.assignment.not.found"), "assignments", rb.getString("tool.assignments.title"), idx));
+					continue;
+				}
+
+				String assignmentReference = assignmentService.assignmentReference(siteId, assignmentId);
+				boolean canUpdate = assignmentService.allowUpdateAssignment(assignmentReference);
+
+				if (!canUpdate) {
+					errors.add(new CourseDatesError("assignment", rb.getString("error.update.permission.denied"), "assignments", rb.getString("tool.assignments.title"), idx));
+					continue;
+				}
+
+				TimeZone userTimeZone = getUserTimeZone();
+
+				Instant openDate = parseStringToInstant((String)jsonAssignment.get("open_date"), userTimeZone);
+				Instant dueDate = parseStringToInstant((String)jsonAssignment.get("due_date"), userTimeZone);
+				Instant acceptUntil = parseStringToInstant((String)jsonAssignment.get("accept_until"), userTimeZone);
+
+				boolean errored = false;
+
+				if (openDate == null) {
+					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.not.found"), "assignments", rb.getString("tool.assignments.title"), idx));
+					errored = true;
+				}
+				if (dueDate == null) {
+					errors.add(new CourseDatesError("due_date", rb.getString("error.due.date.not.found"), "assignments", rb.getString("tool.assignments.title"), idx));
+					errored = true;
+				}
+				if (acceptUntil == null) {
+					errors.add(new CourseDatesError("accept_until", rb.getString("error.accept.until.not.found"), "assignments", rb.getString("tool.assignments.title"), idx));
+					errored = true;
+				}
+
+				if (errored) {
+						continue;
+				}
+
+				Assignment assignment = assignmentService.getAssignment(assignmentId);
+
+				if (assignment == null) {
+					errors.add(new CourseDatesError("assignment", rb.getString("error.assignment.not.found"), "assignments", rb.getString("tool.assignments.title"), idx));
+					continue;
+				}
+
+				CourseDatesUpdate update = new CourseDatesUpdate(assignment, openDate, dueDate, acceptUntil/*,(Boolean)jsonAssignment.get("published")*/);
+
+				if (!update.openDate.isBefore(update.dueDate)) {
+					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.before.due.date"), "assignments", rb.getString("tool.assignments.title"), idx));
+					continue;
+				}
+
+				if (update.dueDate.isAfter(update.acceptUntilDate)) {
+					errors.add(new CourseDatesError("due_date", rb.getString("error.due.date.before.accept.until"), "assignments", rb.getString("tool.assignments.title"), idx));
+					continue;
+				}
+
+				updates.add(update);
+
+			} catch (Exception ex) {
+				errors.add(new CourseDatesError("open_date", rb.getString("error.uncaught"), "assignments", rb.getString("tool.assignments.title"), i));
+				log.error("Error trying to validate Assignments {}", ex);
 			}
-
-			String assignmentReference = assignmentService.assignmentReference(siteId, assignmentId);
-			boolean canUpdate = assignmentService.allowUpdateAssignment(assignmentReference);
-
-			if (!canUpdate) {
-				errors.add(new CourseDatesError("assignment", "Update permission denied", "assignments", "Assignments", idx));
-				continue;
-			}
-
-			TimeZone userTimeZone = getUserTimeZone();
-
-			Instant openDate = parseStringToInstant((String)jsonAssignment.get("open_date"), userTimeZone);
-			Instant dueDate = parseStringToInstant((String)jsonAssignment.get("due_date"), userTimeZone);
-			Instant acceptUntil = parseStringToInstant((String)jsonAssignment.get("accept_until"), userTimeZone);
-
-			boolean errored = false;
-
-			if (openDate == null) {
-				errors.add(new CourseDatesError("open_date", "Could not read Open date", "assignments", "Assignments", idx));
-				errored = true;
-			}
-			if (dueDate == null) {
-				errors.add(new CourseDatesError("due_date", "Could not read Due date", "assignments", "Assignments", idx));
-				errored = true;
-			}
-			if (acceptUntil == null) {
-				errors.add(new CourseDatesError("accept_until", "Could not read Accept Until date", "assignments", "Assignments", idx));
-				errored = true;
-			}
-
-			if (errored) {
-				continue;
-			}
-
-			Assignment assignment = assignmentService.getAssignment(assignmentId);
-
-			if (assignment == null) {
-				errors.add(new CourseDatesError("assignment", "Assignment could not be found", "assignments", "Assignments", idx));
-				continue;
-			}
-
-			CourseDatesUpdate update = new CourseDatesUpdate(assignment, openDate, dueDate, acceptUntil/*,(Boolean)jsonAssignment.get("published")*/);
-
-			if (!update.openDate.isBefore(update.dueDate)) {
-				errors.add(new CourseDatesError("open_date", "Open date must fall before due date", "assignments", "Assignments", idx));
-				continue;
-			}
-
-			if (update.dueDate.isAfter(update.acceptUntilDate)) {
-				errors.add(new CourseDatesError("due_date", "Due date cannot fall after Accept Until date", "assignments", "Assignments", idx));
-				continue;
-			}
-
-			updates.add(update);
 		}
 
 		assignmentValidate.setErrors(errors);
@@ -264,6 +292,9 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return assignmentValidate;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void updateAssignments(CourseDatesValidation assignmentValidation) throws Exception {
 		for (CourseDatesUpdate update : (List<CourseDatesUpdate>)(Object) assignmentValidation.getUpdates()) {
@@ -275,26 +306,29 @@ public class SakaiProxyImpl implements SakaiProxy {
 		}
 	}
 
-	/** ASSESSMENTS **/
+	/***** ASSESSMENTS *****/
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public JSONArray getAssessmentsForContext(String siteId) {
 		JSONArray jsonAssessments = new JSONArray();
 		List<AssessmentData> assessments = assessmentServiceQueries.getAllActiveAssessmentsByAgent(getCurrentSiteId());
 		List<PublishedAssessmentFacade> pubAssessments = pubAssessmentServiceQueries.getBasicInfoOfAllPublishedAssessments2(PublishedAssessmentFacadeQueries.TITLE, true, getCurrentSiteId());
 		Locale userLocale = this.getUserLocale();
-		String url = getUrlForTool("sakai.samigo");
+		String url = getUrlForTool(CourseDatesConstants.COMMON_ID_ASSESSMENTS);
 		for (AssessmentData assessment : assessments) {
 			AssessmentAccessControlIfc control = assessment.getAssessmentAccessControl();
 			boolean lateHandling = (control.getLateHandling() != null && control.getLateHandling() == AssessmentAccessControlIfc.ACCEPT_LATE_SUBMISSION);
 			JSONObject assobj = new JSONObject();
 			assobj.put("id", assessment.getAssessmentBaseId());
 			assobj.put("title", assessment.getTitle());
-			assobj.put("due_date", DateFormatterUtil.format(control.getDueDate(), DATEPICKER_DATETIME_FORMAT, userLocale));
-			assobj.put("open_date", DateFormatterUtil.format(control.getStartDate(), DATEPICKER_DATETIME_FORMAT, userLocale));
-			assobj.put("accept_until", DateFormatterUtil.format(control.getRetractDate(), DATEPICKER_DATETIME_FORMAT, userLocale));
+			assobj.put("due_date", control.getDueDate());
+			assobj.put("open_date", control.getStartDate());
+			assobj.put("accept_until", control.getRetractDate());
 			assobj.put("is_draft", true);
 			assobj.put("late_handling", lateHandling);
-			assobj.put("tool_title", "Tests & Quizzes");
+			assobj.put("tool_title", rb.getString("tool.assessments.title"));
 			assobj.put("url", url);//TODO redirect to assessment if possible
 			assobj.put("extraInfo", rb.getString("itemtype.draft"));
 			jsonAssessments.add(assobj);
@@ -306,12 +340,12 @@ public class SakaiProxyImpl implements SakaiProxy {
 			JSONObject assobj = new JSONObject();
 			assobj.put("id", assessment.getPublishedAssessmentId());
 			assobj.put("title", assessment.getTitle());
-			assobj.put("due_date", DateFormatterUtil.format(control.getDueDate(), DATEPICKER_DATETIME_FORMAT, userLocale));
-			assobj.put("open_date", DateFormatterUtil.format(control.getStartDate(), DATEPICKER_DATETIME_FORMAT, userLocale));
-			assobj.put("accept_until", DateFormatterUtil.format(control.getRetractDate(), DATEPICKER_DATETIME_FORMAT, userLocale));
+			assobj.put("due_date", control.getDueDate());
+			assobj.put("open_date", control.getStartDate());
+			assobj.put("accept_until", control.getRetractDate());
 			assobj.put("is_draft", false);
 			assobj.put("late_handling", lateHandling);
-			assobj.put("tool_title", "Tests & Quizzes");
+			assobj.put("tool_title", rb.getString("tool.assessments.title"));
 			assobj.put("url", url);
 			assobj.put("extraInfo", "false");
 			jsonAssessments.add(assobj);
@@ -319,6 +353,9 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return jsonAssessments;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public CourseDatesValidation validateAssessments(String siteId, JSONArray assessments) throws Exception {
 		CourseDatesValidation assessmentValidate = new CourseDatesValidation();
@@ -327,74 +364,80 @@ public class SakaiProxyImpl implements SakaiProxy {
 
 		for (int i = 0; i < assessments.size(); i++) {
 			JSONObject jsonAssessment = (JSONObject)assessments.get(i);
-
 			Long assessmentId = Long.parseLong(jsonAssessment.get("id").toString());
 			int idx = Integer.parseInt(jsonAssessment.get("idx").toString());
 
-			/* VALIDATE IF USER CAN UPDATE THE ASSESSMENT */
+			try {
 
-			TimeZone userTimeZone = getUserTimeZone();
+				/* VALIDATE IF USER CAN UPDATE THE ASSESSMENT */
 
-			Instant openDate = parseStringToInstant((String)jsonAssessment.get("open_date"), userTimeZone);
-			Instant dueDate = parseStringToInstant((String)jsonAssessment.get("due_date"), userTimeZone);
-			Instant acceptUntil = parseStringToInstant((String)jsonAssessment.get("accept_until"), userTimeZone);
-						boolean isDraft = Boolean.parseBoolean(jsonAssessment.get("is_draft").toString());
+				TimeZone userTimeZone = getUserTimeZone();
 
-						Object assessment;
-						AssessmentAccessControlIfc control;
-						if (isDraft) {
-							assessment = assessmentServiceQueries.getAssessment(assessmentId);
-							control = ((AssessmentFacade) assessment).getAssessmentAccessControl();
-						} else {
-							assessment = pubAssessmentServiceQueries.getPublishedAssessment(assessmentId);
-							control = ((PublishedAssessmentFacade) assessment).getAssessmentAccessControl();
-						}
-						boolean lateHandling = control.getLateHandling() != null && control.getLateHandling() == AssessmentAccessControlIfc.ACCEPT_LATE_SUBMISSION;
+				Instant openDate = parseStringToInstant((String)jsonAssessment.get("open_date"), userTimeZone);
+				Instant dueDate = parseStringToInstant((String)jsonAssessment.get("due_date"), userTimeZone);
+				Instant acceptUntil = parseStringToInstant((String)jsonAssessment.get("accept_until"), userTimeZone);
+				boolean isDraft = Boolean.parseBoolean(jsonAssessment.get("is_draft").toString());
 
-			if (assessment == null) {
-				errors.add(new CourseDatesError("assessment", "Assignment could not be found", "assessments", "Tests & Quizzes", idx));
-				continue;
+				Object assessment;
+				AssessmentAccessControlIfc control;
+				if (isDraft) {
+					assessment = assessmentServiceQueries.getAssessment(assessmentId);
+					control = ((AssessmentFacade) assessment).getAssessmentAccessControl();
+				} else {
+					assessment = pubAssessmentServiceQueries.getPublishedAssessment(assessmentId);
+					control = ((PublishedAssessmentFacade) assessment).getAssessmentAccessControl();
+				}
+				boolean lateHandling = control.getLateHandling() != null && control.getLateHandling() == AssessmentAccessControlIfc.ACCEPT_LATE_SUBMISSION;
+
+				if (assessment == null) {
+					errors.add(new CourseDatesError("assessment", rb.getString("error.assessment.not.found"), "assessments", rb.getString("tool.assessments.title"), idx));
+					continue;
+				}
+				boolean errored = false;
+
+				if (openDate == null) {
+					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.not.found"), "assessments", rb.getString("tool.assessments.title"), idx));
+					errored = true;
+				}
+				if (dueDate == null) {
+					errors.add(new CourseDatesError("due_date", rb.getString("error.due.date.not.found"), "assessments", rb.getString("tool.assessments.title"), idx));
+					errored = true;
+				}
+				if (acceptUntil == null && lateHandling) {
+					errors.add(new CourseDatesError("accept_until", rb.getString("error.accept.until.not.found"), "assessments", rb.getString("tool.assessments.title"), i));
+					errored = true;
+				}
+
+				if (errored) {
+					continue;
+				}
+
+				log.debug("Open {} ; Due {} ; Until {}", jsonAssessment.get("open_date_label"), jsonAssessment.get("due_date_label"), jsonAssessment.get("accept_until_label"));
+				if(StringUtils.isBlank((String)jsonAssessment.get("due_date_label"))) {
+					dueDate = null;
+				}
+				if(StringUtils.isBlank((String)jsonAssessment.get("accept_until_label"))) {
+					acceptUntil = null;
+				}
+
+				CourseDatesUpdate update = new CourseDatesUpdate(assessment, openDate, dueDate, acceptUntil/*,(Boolean)jsonAssignment.get("published")*/);
+
+				if (dueDate != null && !update.openDate.isBefore(update.dueDate)) {
+					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.before.due.date"), "assessments", rb.getString("tool.assessments.title"), idx));
+					continue;
+				}
+
+				if (lateHandling && dueDate != null && acceptUntil != null && update.dueDate.isAfter(update.acceptUntilDate)) {
+					errors.add(new CourseDatesError("due_date", rb.getString("error.due.date.before.accept.until"), "assessments", rb.getString("tool.assessments.title"), idx));
+					continue;
+				}
+
+				updates.add(update);
+
+			} catch (Exception ex) {
+				errors.add(new CourseDatesError("open_date", rb.getString("error.uncaught"), "assessments", rb.getString("tool.assessments.title"), idx));
+				log.error("Error trying to validate Tests & Quizzes {}", ex);
 			}
-			boolean errored = false;
-
-			if (openDate == null) {
-				errors.add(new CourseDatesError("open_date", "Could not read Open date", "assessments", "Tests & Quizzes", idx));
-				errored = true;
-			}
-			if (dueDate == null) {
-				errors.add(new CourseDatesError("due_date", "Could not read Due date", "assessments", "Tests & Quizzes", idx));
-				errored = true;
-			}
-			if (acceptUntil == null && lateHandling) {
-				errors.add(new CourseDatesError("accept_until", "Could not read Accept Until date", "assessments", "Tests & Quizzes", i));
-				errored = true;
-			}
-
-			if (errored) {
-				continue;
-			}
-
-			log.debug("Open {} ; Due {} ; Until {}", jsonAssessment.get("open_date_label"), jsonAssessment.get("due_date_label"), jsonAssessment.get("accept_until_label"));
-			if(StringUtils.isBlank((String)jsonAssessment.get("due_date_label"))) {
-				dueDate = null;
-			}
-			if(StringUtils.isBlank((String)jsonAssessment.get("accept_until_label"))) {
-				acceptUntil = null;
-			}
-
-			CourseDatesUpdate update = new CourseDatesUpdate(assessment, openDate, dueDate, acceptUntil/*,(Boolean)jsonAssignment.get("published")*/);
-
-			if (dueDate != null && !update.openDate.isBefore(update.dueDate)) {
-				errors.add(new CourseDatesError("open_date", "Open date must fall before due date", "assessments", "Tests & Quizzes", idx));
-				continue;
-			}
-
-			if (lateHandling && dueDate != null && acceptUntil != null && update.dueDate.isAfter(update.acceptUntilDate)) {
-				errors.add(new CourseDatesError("due_date", "Due date cannot fall after Accept Until date", "assessments", "Tests & Quizzes", i));
-				continue;
-			}
-
-			updates.add(update);
 		}
 
 		assessmentValidate.setErrors(errors);
@@ -402,6 +445,9 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return assessmentValidate;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void updateAssessments(CourseDatesValidation assessmentsValidation) throws Exception {
 		for (CourseDatesUpdate update : (List<CourseDatesUpdate>)(Object) assessmentsValidation.getUpdates()) {
@@ -436,7 +482,10 @@ public class SakaiProxyImpl implements SakaiProxy {
 		}
 	}
 
-	/** GRADEBOOK **/
+	/***** GRADEBOOK *****/
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public JSONArray getGradebookItemsForContext(String siteId) {
 		JSONArray jsonAssignments = new JSONArray();
@@ -445,14 +494,14 @@ public class SakaiProxyImpl implements SakaiProxy {
 		}
 		Collection<org.sakaiproject.service.gradebook.shared.Assignment> gbitems = gradebookService.getAssignments(siteId);
 		Locale userLocale = getUserLocale();
-		String url = getUrlForTool("sakai.gradebookng");
+		String url = getUrlForTool(CourseDatesConstants.COMMON_ID_GRADEBOOK);
 		for(org.sakaiproject.service.gradebook.shared.Assignment gbitem : gbitems) {
 			if(!gbitem.isExternallyMaintained()) {
 				JSONObject gobj = new JSONObject();
 				gobj.put("id", gbitem.getId());
 				gobj.put("title", gbitem.getName());
-				gobj.put("due_date", DateFormatterUtil.format(gbitem.getDueDate(), DATEPICKER_DATE_FORMAT, userLocale));//no es release date en realidad?
-				gobj.put("tool_title", "Gradebook");
+				gobj.put("due_date", gbitem.getDueDate());//no es release date en realidad?
+				gobj.put("tool_title", rb.getString("tool.gradebook.title"));
 				gobj.put("url", url);
 				gobj.put("extraInfo", "false");
 				jsonAssignments.add(gobj);
@@ -461,6 +510,9 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return jsonAssignments;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public CourseDatesValidation validateGradebookItems(String siteId, JSONArray gradebookItems) throws Exception {
 		CourseDatesValidation gradebookItemsValidate = new CourseDatesValidation();
@@ -468,34 +520,41 @@ public class SakaiProxyImpl implements SakaiProxy {
 		List<Object> updates = new ArrayList<>();
 
 		if(!gradebookService.currentUserHasEditPerm(getCurrentSiteId())) {
-			errors.add(new CourseDatesError("gbitem", "Update permission denied", "gradebookItems", "Gradebook", 0));
+			errors.add(new CourseDatesError("gbitem", rb.getString("error.update.permission.denied"), "gradebookItems", rb.getString("tool.gradebook.title"), 0));
 		}
 
 		for (int i = 0; i < gradebookItems.size(); i++) {
 			JSONObject jsonItem = (JSONObject)gradebookItems.get(i);
+			int idx = Integer.parseInt(jsonItem.get("idx").toString());
 
-			Long itemId = (Long)jsonItem.get("id");
-			if (itemId == null) {
-				errors.add(new CourseDatesError("gbitem", "Gradebook item could not be found", "gradebookItems", "Gradebook", i));
-				continue;
+			try {
+				Long itemId = (Long)jsonItem.get("id");
+				if (itemId == null) {
+					errors.add(new CourseDatesError("gbitem", rb.getString("error.gradebook.not.found"), "gradebookItems", rb.getString("tool.gradebook.title"), idx));
+					continue;
+				}
+
+				TimeZone userTimeZone = getUserTimeZone();
+				Instant dueDate = parseStringToInstant((String)jsonItem.get("due_date"), userTimeZone);
+
+				if (dueDate == null) {
+					errors.add(new CourseDatesError("due_date", rb.getString("error.due.date.not.found"), "gradebookItems", rb.getString("tool.gradebook.title"), idx));
+					continue;
+				}
+
+				org.sakaiproject.service.gradebook.shared.Assignment gbitem = gradebookService.getAssignment(getCurrentSiteId(), itemId);
+				if (gbitem == null) {
+					errors.add(new CourseDatesError("gbitem", rb.getString("error.gradebook.not.found"), "gradebookItems", rb.getString("tool.gradebook.title"), idx));
+					continue;
+				}
+
+				CourseDatesUpdate update = new CourseDatesUpdate(gbitem, null, dueDate, null/*,(Boolean)jsonAssignment.get("published")*/);
+				updates.add(update);
+
+			} catch (Exception ex) {
+				errors.add(new CourseDatesError("open_date", rb.getString("error.uncaught"), "gradebookItems", rb.getString("tool.gradebook.title"), idx));
+				log.error("Error trying to validate Gradebook {}", ex);
 			}
-
-			TimeZone userTimeZone = getUserTimeZone();
-			Instant dueDate = parseStringToInstant((String)jsonItem.get("due_date"), userTimeZone);
-
-			if (dueDate == null) {
-				errors.add(new CourseDatesError("due_date", "Could not read Due date", "gradebookItems", "Gradebook", i));
-				continue;
-			}
-
-			org.sakaiproject.service.gradebook.shared.Assignment gbitem = gradebookService.getAssignment(getCurrentSiteId(), itemId);
-			if (gbitem == null) {
-				errors.add(new CourseDatesError("gbitem", "Gradebook item could not be found", "gradebookItems", "Gradebook", i));
-				continue;
-			}
-
-			CourseDatesUpdate update = new CourseDatesUpdate(gbitem, null, dueDate, null/*,(Boolean)jsonAssignment.get("published")*/);
-			updates.add(update);
 		}
 
 		gradebookItemsValidate.setErrors(errors);
@@ -503,29 +562,35 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return gradebookItemsValidate;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void updateGradebookItems(CourseDatesValidation gradebookItemsValidate) throws Exception {
 		for (CourseDatesUpdate update : (List<CourseDatesUpdate>)(Object) gradebookItemsValidate.getUpdates()) {
 			org.sakaiproject.service.gradebook.shared.Assignment assignmentDefinition = (org.sakaiproject.service.gradebook.shared.Assignment) update.object;
 			assignmentDefinition.setDueDate(Date.from(update.dueDate));
-
 			gradebookService.updateAssignment(getCurrentSiteId(), assignmentDefinition.getId(), assignmentDefinition);
 		}
 	}
 
-	/** SIGNUP **/
+	/***** SIGNUP *****/
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public JSONArray getSignupMeetingsForContext(String siteId) {
 		JSONArray jsonMeetings = new JSONArray();
 		Collection<SignupMeeting> meetings = signupService.getAllSignupMeetings(siteId, getCurrentUserId());
 		Locale userLocale = getUserLocale();
-		String url = getUrlForTool("sakai.signup");
+		String url = getUrlForTool(CourseDatesConstants.COMMON_ID_SIGNUP);
 		for(SignupMeeting meeting : meetings) {
 			JSONObject mobj = new JSONObject();
 			mobj.put("id", meeting.getId());
 			mobj.put("title", meeting.getTitle());
-			mobj.put("due_date", DateFormatterUtil.format(meeting.getEndTime(), DATEPICKER_DATETIME_FORMAT, userLocale));
-			mobj.put("open_date", DateFormatterUtil.format(meeting.getStartTime(), DATEPICKER_DATETIME_FORMAT, userLocale));
-			mobj.put("tool_title", "Sign-Up");
+			mobj.put("due_date", formatToUserDateFormat(meeting.getEndTime()));
+			mobj.put("open_date", formatToUserDateFormat(meeting.getStartTime()));
+			mobj.put("tool_title", rb.getString("tool.signup.title"));
 			mobj.put("url", url);//TODO redirect to meeting if possible, it seems to be managed directly on the tool
 			mobj.put("extraInfo", "false");
 			jsonMeetings.add(mobj);
@@ -533,6 +598,10 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return jsonMeetings;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public CourseDatesValidation validateSignupMeetings(String siteId, JSONArray signupMeetings) throws Exception {
 		CourseDatesValidation meetingsValidate = new CourseDatesValidation();
 		List<CourseDatesError> errors = new ArrayList<>();
@@ -540,96 +609,117 @@ public class SakaiProxyImpl implements SakaiProxy {
 
 		boolean canUpdate = signupService.isAllowedToCreateinSite(getCurrentUserId(), getCurrentSiteId());
 		if (!canUpdate) {
-			errors.add(new CourseDatesError("signup", "Update permission denied", "signupMeetings", "Sign Up", 0));
+			errors.add(new CourseDatesError("signup", rb.getString("error.update.permission.denied"), "signupMeetings", rb.getString("tool.signup.title"), 0));
 		}
 		for (int i = 0; i < signupMeetings.size(); i++) {
 			JSONObject jsonMeeting = (JSONObject)signupMeetings.get(i);
+			int idx = Integer.parseInt(jsonMeeting.get("idx").toString());
 
-			Long meetingId = (Long)jsonMeeting.get("id");
-			if (meetingId == null) {
-				errors.add(new CourseDatesError("signup", "Meeting could not be found", "signupMeetings", "Sign Up", i));
-				continue;
-			}
+			try {
 
-			TimeZone userTimeZone = getUserTimeZone();
-			Instant openDate = parseStringToInstant((String)jsonMeeting.get("open_date"), userTimeZone);
-			Instant dueDate = parseStringToInstant((String)jsonMeeting.get("due_date"), userTimeZone);
-			boolean errored = false;
-			if (openDate == null) {
-				errors.add(new CourseDatesError("open_date", "Could not read Open date", "signupMeetings", "Sign Up", i));
-				errored = true;
-			}
-			if (dueDate == null) {
-				errors.add(new CourseDatesError("due_date", "Could not read Due date", "signupMeetings", "Sign Up", i));
-				errored = true;
-			}
-			if (errored) {
-				continue;
-			}
+				Long meetingId = (Long)jsonMeeting.get("id");
+				if (meetingId == null) {
+					errors.add(new CourseDatesError("signup", rb.getString("error.signup.not.found"), "signupMeetings", rb.getString("tool.signup.title"), idx));
+					continue;
+				}
 
-			SignupMeeting meeting = signupService.loadSignupMeeting(meetingId, getCurrentUserId(), getCurrentSiteId());
-			if (meeting == null) {
-				errors.add(new CourseDatesError("signup", "Meeting could not be found", "signupMeetings", "Sign Up", i));
-				continue;
-			}
+				TimeZone userTimeZone = getUserTimeZone();
+				Instant openDate = parseStringToInstant((String)jsonMeeting.get("open_date"), userTimeZone);
+				Instant dueDate = parseStringToInstant((String)jsonMeeting.get("due_date"), userTimeZone);
+				boolean errored = false;
+				if (openDate == null) {
+					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.not.found"), "signupMeetings", rb.getString("tool.signup.title"), idx));
+					errored = true;
+				}
+				if (dueDate == null) {
+					errors.add(new CourseDatesError("due_date", rb.getString("error.due.date.not.found"), "signupMeetings", rb.getString("tool.signup.title"), idx));
+					errored = true;
+				}
+				if (errored) {
+					continue;
+				}
 
-			CourseDatesUpdate update = new CourseDatesUpdate(meeting, openDate, dueDate, null/*,(Boolean)jsonMeeting.get("published")*/);
-			if (!update.openDate.isBefore(update.dueDate)) {
-				errors.add(new CourseDatesError("open_date", "Open date must fall before due date", "signupMeetings", "Sign Up", i));
-				continue;
+				SignupMeeting meeting = signupService.loadSignupMeeting(meetingId, getCurrentUserId(), getCurrentSiteId());
+				if (meeting == null) {
+					errors.add(new CourseDatesError("signup", rb.getString("error.signup.not.found"), "signupMeetings", rb.getString("tool.signup.title"), idx));
+					continue;
+				}
+
+				CourseDatesUpdate update = new CourseDatesUpdate(meeting, openDate, dueDate, null/*,(Boolean)jsonMeeting.get("published")*/);
+				if (!update.openDate.isBefore(update.dueDate)) {
+					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.before.due.date"), "signupMeetings", rb.getString("tool.signup.title"), idx));
+					continue;
+				}
+				updates.add(update);
+
+			} catch (Exception ex) {
+				errors.add(new CourseDatesError("open_date", rb.getString("error.uncaught"), "signupMeetings", rb.getString("tool.signup.title"), idx));
+				log.error("Error trying to validate Sign Up {}", ex);
 			}
-			updates.add(update);
 		}
 		meetingsValidate.setErrors(errors);
 		meetingsValidate.setUpdates(updates);
 		return meetingsValidate;
 	}
 
+		/**
+		 * {@inheritDoc}
+		 */
+	@Override
 	public void updateSignupMeetings(CourseDatesValidation signupValidate) throws Exception {
 		for (CourseDatesUpdate update : (List<CourseDatesUpdate>)(Object) signupValidate.getUpdates()) {
 			SignupMeeting meeting = (SignupMeeting) update.object;
 			meeting.setStartTime(Date.from(update.openDate));
 			meeting.setEndTime(Date.from(update.dueDate));
-
 			signupService.updateSignupMeeting(meeting, false);
 		}
 	}
 
-	/** RESOURCES **/
+	/***** RESOURCES *****/
+		/**
+		 * {@inheritDoc}
+		 */
+	@Override
 	public JSONArray getResourcesForContext(String siteId) {
 		JSONArray jsonResources = new JSONArray();
 		List<ContentEntity> unformattedList = contentHostingService.getAllEntities("/group/"+siteId+"/");
 		Locale userLocale = getUserLocale();
-		String url = getUrlForTool("sakai.resources");
+		String url = getUrlForTool(CourseDatesConstants.COMMON_ID_RESOURCES);
 		for(ContentEntity res : unformattedList) {
 			JSONObject robj = new JSONObject();
 			ResourceProperties contentResourceProps = res.getProperties();
 			robj.put("id", res.getId());
 			robj.put("title", contentResourceProps.getProperty(ResourceProperties.PROP_DISPLAY_NAME));
-			if(res.getRetractDate() != null) robj.put("due_date", DateFormatterUtil.format(new Date(res.getRetractDate().getTime()), DATEPICKER_DATETIME_FORMAT, userLocale));
+			if(res.getRetractDate() != null) robj.put("due_date", formatToUserDateFormat(new Date(res.getRetractDate().getTime())));
 			else robj.put("due_date", null);
-			if(res.getReleaseDate() != null) robj.put("open_date", DateFormatterUtil.format(new Date(res.getReleaseDate().getTime()), DATEPICKER_DATETIME_FORMAT, userLocale));
+			if(res.getReleaseDate() != null) robj.put("open_date", formatToUserDateFormat(new Date(res.getReleaseDate().getTime())));
 			else robj.put("open_date", null);
 			robj.put("extraInfo", StringUtils.defaultIfBlank(res.getProperties().getProperty(ResourceProperties.PROP_CONTENT_TYPE), rb.getString("itemtype.folder")));
-			robj.put("tool_title", "Resources");
+			robj.put("tool_title", rb.getString("tool.resources.title"));
 			robj.put("url", url);//redirect to tool, although we could link the file
 			jsonResources.add(robj);
 		}
 		return jsonResources;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public CourseDatesValidation validateResources(String siteId, JSONArray resources) throws Exception {
 		CourseDatesValidation resourcesValidate = new CourseDatesValidation();
 		List<CourseDatesError> errors = new ArrayList<>();
 		List<Object> updates = new ArrayList<>();
 
-		try {
-			for (int i = 0; i < resources.size(); i++) {
-				JSONObject jsonResource = (JSONObject)resources.get(i);
+		for (int i = 0; i < resources.size(); i++) {
+			JSONObject jsonResource = (JSONObject)resources.get(i);
+			int idx = Integer.parseInt(jsonResource.get("idx").toString());
+
+			try {
 
 				String resourceId = (String)jsonResource.get("id");
 				if (resourceId == null) {
-					errors.add(new CourseDatesError("resource", "Meeting could not be found", "resources", "Resources", i));
+					errors.add(new CourseDatesError("resource", rb.getString("error.resource.not.found"), "resources", rb.getString("tool.resources.title"), idx));
 					continue;
 				}
 
@@ -638,11 +728,11 @@ public class SakaiProxyImpl implements SakaiProxy {
 				Instant dueDate = parseStringToInstant((String)jsonResource.get("due_date"), userTimeZone);
 				boolean errored = false;
 				if (openDate == null) {
-					errors.add(new CourseDatesError("open_date", "Could not read Open date", "resources", "Resources", i));
+					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.not.found"), "resources", rb.getString("tool.resources.title"), idx));
 					errored = true;
 				}
 				if (dueDate == null) {
-					errors.add(new CourseDatesError("due_date", "Could not read Due date", "resources", "Resources", i));
+					errors.add(new CourseDatesError("due_date", rb.getString("error.due.date.not.found"), "resources", rb.getString("tool.resources.title"), idx));
 					errored = true;
 				}
 				if (errored) {
@@ -659,46 +749,50 @@ public class SakaiProxyImpl implements SakaiProxy {
 				if(!rb.getString("itemtype.folder").equals(entityType)) {
 					ContentResourceEdit resource = contentHostingService.editResource(resourceId);
 					if (resource == null) {
-						errors.add(new CourseDatesError("resource", "Resource could not be found", "resources", "Resources", i));
+						errors.add(new CourseDatesError("resource", rb.getString("error.resource.not.found"), "resources", rb.getString("tool.resources.title"), idx));
 						continue;
 					}
 
 					boolean canUpdate = contentHostingService.allowUpdateResource(resourceId);
 					if (!canUpdate) {
-						errors.add(new CourseDatesError("resource", "Update permission denied", "resources", "Resources", i));
+						errors.add(new CourseDatesError("resource", rb.getString("error.update.permission.denied"), "resources", rb.getString("tool.resources.title"), idx));
 					}
 					update = new CourseDatesUpdate(resource, openDate, dueDate, null);
 				} else {
 					ContentCollectionEdit folder = contentHostingService.editCollection(resourceId);
 					if (folder == null) {
-						errors.add(new CourseDatesError("resource", "Folder could not be found", "resources", "Resources", i));
+						errors.add(new CourseDatesError("resource", rb.getString("error.folder.not.found"), "resources", rb.getString("tool.resources.title"), idx));
 						continue;
 					}
 
 					boolean canUpdate = contentHostingService.allowUpdateCollection(resourceId);
 					if (!canUpdate) {
-						errors.add(new CourseDatesError("resource", "Update permission denied", "resources", "Resources", i));
+						errors.add(new CourseDatesError("resource", rb.getString("error.update.permission.denied"), "resources", rb.getString("tool.resources.title"), idx));
 					}
 					update = new CourseDatesUpdate(folder, openDate, dueDate, null);
 				}
 
 				if (dueDate != null && !update.openDate.isBefore(update.dueDate)) {
-					errors.add(new CourseDatesError("open_date", "Open date must fall before due date", "resources", "Resources", i));
+					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.before.due.date"), "resources", rb.getString("tool.resources.title"), idx));
 					continue;
 				}
 				updates.add(update);
+
+			} catch(Exception e) {
+				errors.add(new CourseDatesError("open_date", rb.getString("error.uncaught"), "resources", rb.getString("tool.resources.title"), idx));
+				log.error("Error trying to validate Resources {}", e);
 			}
-		//TODO ENVOLVER TODOS LOS VALIDATES CON UN TRY CATCH PARA EVITAR PETESSS
-		} catch(Exception e) {
-			errors.add(new CourseDatesError("resource", "Uncaught error", "resources", "Resources", 0));
-			log.error("Error trying to validate Resources {}", e);
 		}
-		
+
 		resourcesValidate.setErrors(errors);
 		resourcesValidate.setUpdates(updates);
 		return resourcesValidate;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public void updateResources(CourseDatesValidation resourceValidation) throws Exception {
 		for (CourseDatesUpdate update : (List<CourseDatesUpdate>)(Object) resourceValidation.getUpdates()) {
 			if (update.object instanceof ContentCollectionEdit) {
@@ -719,13 +813,16 @@ public class SakaiProxyImpl implements SakaiProxy {
 		}
 	}
 
-	/** CALENDAR EVENTS **/
-	private static final int LIST_VIEW_YEAR_RANGE = 18;
+	/***** CALENDAR EVENTS *****/
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public JSONArray getCalendarEventsForContext(String siteId) {
 		JSONArray jsonCalendar = new JSONArray();
 		Locale userLocale = getUserLocale();
-		int startYear = timeService.newTime().breakdownLocal().getYear() - LIST_VIEW_YEAR_RANGE / 2;
-	 	int endYear = timeService.newTime().breakdownLocal().getYear() + LIST_VIEW_YEAR_RANGE / 2;
+		int startYear = timeService.newTime().breakdownLocal().getYear() - CourseDatesConstants.LIST_VIEW_YEAR_RANGE / 2;
+	 	int endYear = timeService.newTime().breakdownLocal().getYear() + CourseDatesConstants.LIST_VIEW_YEAR_RANGE / 2;
 		Time startingListViewDate = timeService.newTimeLocal(startYear,/* startMonth, startDay,*/0, 0, 0, 0, 0, 0);
 		Time endingListViewDate = timeService.newTimeLocal(endYear, 12, 31, 23, 59, 59, 99);
 		try {
@@ -733,15 +830,15 @@ public class SakaiProxyImpl implements SakaiProxy {
 			if (c == null) {
 				return jsonCalendar;
 			}
-			String url = getUrlForTool("sakai.schedule");
+			String url = getUrlForTool(CourseDatesConstants.COMMON_ID_CALENDAR);
 			List<CalendarEvent> calendarEvents = c.getEvents(timeService.newTimeRange(startingListViewDate, endingListViewDate), null);
 			for (CalendarEvent calendarEvent : calendarEvents) {
 				JSONObject cobj = new JSONObject();
 				cobj.put("id", calendarEvent.getId());
 				cobj.put("title", calendarEvent.getDisplayName());
-				cobj.put("open_date", DateFormatterUtil.format(new Date(calendarEvent.getRange().firstTime().getTime()), DATEPICKER_DATETIME_FORMAT, userLocale));
-				cobj.put("due_date", DateFormatterUtil.format(new Date(calendarEvent.getRange().lastTime().getTime()), DATEPICKER_DATETIME_FORMAT, userLocale));
-				cobj.put("tool_title", "Calendar");
+				cobj.put("open_date", formatToUserDateFormat(new Date(calendarEvent.getRange().firstTime().getTime())));
+				cobj.put("due_date", formatToUserDateFormat(new Date(calendarEvent.getRange().lastTime().getTime())));
+				cobj.put("tool_title", rb.getString("tool.calendar.title"));
 				cobj.put("url", url + "?eventReference=" + Validator.escapeUrl(calendarEvent.getReference()) + "&panel=Main&sakai_action=doDescription&sakai.state.reset=true");
 				cobj.put("extraInfo", "false");
 				jsonCalendar.add(cobj);
@@ -752,6 +849,10 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return jsonCalendar;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public CourseDatesValidation validateCalendarEvents(String siteId, JSONArray calendarEvents) throws Exception {
 		CourseDatesValidation calendarValidate = new CourseDatesValidation();
 		List<CourseDatesError> errors = new ArrayList<>();
@@ -761,58 +862,68 @@ public class SakaiProxyImpl implements SakaiProxy {
 		if (c != null) {
 			boolean canUpdate = calendarService.allowEditCalendar(c.getReference());
 			if (!canUpdate) {
-				errors.add(new CourseDatesError("calendar", "Update permission denied", "calendarEvents", "Calendar", 0));
+				errors.add(new CourseDatesError("calendar", rb.getString("error.update.permission.denied"), "calendarEvents", rb.getString("tool.calendar.title"), 0));
 			}
 		}
-		for (int i = 0; i < calendarEvents.size(); i++) {			
+		for (int i = 0; i < calendarEvents.size(); i++) {
 			JSONObject jsonEvent = (JSONObject)calendarEvents.get(i);
-
 			String eventId = (String)jsonEvent.get("id");
-			if (eventId == null) {
-				errors.add(new CourseDatesError("calendar", "Event could not be found", "calendarEvents", "Calendar", i));
-				continue;
-			}
+			int idx = Integer.parseInt(jsonEvent.get("idx").toString());
 
-			TimeZone userTimeZone = getUserTimeZone();
-			Instant openDate = parseStringToInstant((String)jsonEvent.get("open_date"), userTimeZone);
-			Instant dueDate = parseStringToInstant((String)jsonEvent.get("due_date"), userTimeZone);
-			boolean errored = false;
-			if (openDate == null) {
-				errors.add(new CourseDatesError("open_date", "Could not read Open date", "calendarEvents", "Calendar", i));
-				errored = true;
-			}
-			if (dueDate == null) {
-				errors.add(new CourseDatesError("due_date", "Could not read Due date", "calendarEvents", "Calendar", i));
-				errored = true;
-			}
-			if (errored) {
-				continue;
-			}
+			try {
+				if (eventId == null) {
+					errors.add(new CourseDatesError("calendar", rb.getString("error.event.not.found"), "calendarEvents", rb.getString("tool.calendar.title"), idx));
+					continue;
+				}
 
-			boolean canUpdate = c.allowEditEvent(eventId);
-			if (!canUpdate) {
-				errors.add(new CourseDatesError("calendar", "Update permission for event denied", "calendarEvents", "Calendar", i));
-			}
+				TimeZone userTimeZone = getUserTimeZone();
+				Instant openDate = parseStringToInstant((String)jsonEvent.get("open_date"), userTimeZone);
+				Instant dueDate = parseStringToInstant((String)jsonEvent.get("due_date"), userTimeZone);
+				boolean errored = false;
+				if (openDate == null) {
+					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.not.found"), "calendarEvents", rb.getString("tool.calendar.title"), idx));
+					errored = true;
+				}
+				if (dueDate == null) {
+					errors.add(new CourseDatesError("due_date", rb.getString("error.due.date.not.found"), "calendarEvents", rb.getString("tool.calendar.title"), idx));
+					errored = true;
+				}
+				if (errored) {
+					continue;
+				}
 
-			CalendarEventEdit calendarEvent = c.getEditEvent(eventId, calendarService.EVENT_MODIFY_CALENDAR);
-			if (calendarEvent == null) {
-				errors.add(new CourseDatesError("calendar", "Event could not be found", "calendarEvents", "Calendar", i));
-				continue;
-			}
+				boolean canUpdate = c.allowEditEvent(eventId);
+				if (!canUpdate) {
+					errors.add(new CourseDatesError("calendar", rb.getString("error.event.permission"), "calendarEvents", rb.getString("tool.calendar.title"), idx));
+				}
+				CalendarEventEdit calendarEvent = c.getEditEvent(eventId, CalendarService.EVENT_MODIFY_CALENDAR);
+				if (calendarEvent == null) {
+					errors.add(new CourseDatesError("calendar", rb.getString("error.event.not.found"), "calendarEvents", rb.getString("tool.calendar.title"), idx));
+					continue;
+				}
 
-			CourseDatesUpdate update = new CourseDatesUpdate(calendarEvent, openDate, dueDate, null);
-			if (!update.openDate.isBefore(update.dueDate)) {
-				errors.add(new CourseDatesError("open_date", "Open date must fall before due date", "calendarEvents", "Calendar", i));
-				continue;
+				CourseDatesUpdate update = new CourseDatesUpdate(calendarEvent, openDate, dueDate, null);
+				if (!update.openDate.isBefore(update.dueDate)) {
+					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.before.due.date"), "calendarEvents", rb.getString("tool.calendar.title"), idx));
+					continue;
+				}
+				updates.add(update);
+
+			} catch (Exception ex) {
+				errors.add(new CourseDatesError("open_date", rb.getString("error.uncaught"), "calendarEvents", rb.getString("tool.calendar.title"), idx));
+				log.error("Cannot edit event {}", eventId);
 			}
-			updates.add(update);
-		}		
-		
+		}
+
 		calendarValidate.setErrors(errors);
 		calendarValidate.setUpdates(updates);
 		return calendarValidate;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public void updateCalendarEvents(CourseDatesValidation calendarValidation) throws Exception {
 		Calendar c = getCalendar();
 		if (c != null) {
@@ -826,7 +937,6 @@ public class SakaiProxyImpl implements SakaiProxy {
 		}
 	}
 
-	private Map<String, Calendar> calendarMap = new HashMap<>();
 	private Calendar getCalendar() {
 		if(calendarMap.get(getCurrentSiteId()) != null) { return calendarMap.get(getCurrentSiteId()); }
 		try {
@@ -840,18 +950,22 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return null;
 	}
 
-	/** FORUMS **/
+	/***** FORUMS *****/
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public JSONArray getForumsForContext(String siteId) {
 		JSONArray jsonForums = new JSONArray();
 		Locale userLocale = getUserLocale();
-		String url = getUrlForTool("sakai.forums");
+		String url = getUrlForTool(CourseDatesConstants.COMMON_ID_FORUMS);
 		for (DiscussionForum forum : forumManager.getForumsForMainPage()) {
 			JSONObject fobj = new JSONObject();
 			fobj.put("id", forum.getId());
 			fobj.put("title", forum.getTitle());
 			if(forum.getAvailabilityRestricted()) {
-				fobj.put("due_date", DateFormatterUtil.format(forum.getCloseDate(), DATEPICKER_DATETIME_FORMAT, userLocale));
-				fobj.put("open_date", DateFormatterUtil.format(forum.getOpenDate(), DATEPICKER_DATETIME_FORMAT, userLocale));
+				fobj.put("due_date", formatToUserDateFormat(forum.getCloseDate()));
+				fobj.put("open_date", formatToUserDateFormat(forum.getOpenDate()));
 				fobj.put("restricted", true);
 			} else {
 				fobj.put("restricted", false);
@@ -859,7 +973,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 				fobj.put("open_date", null);
 			}
 			fobj.put("extraInfo", rb.getString("itemtype.forum"));
-			fobj.put("tool_title", "Forums");
+			fobj.put("tool_title", rb.getString("tool.forums.title"));
 			fobj.put("url", url);//TODO redirect to forum if possible
 			for (Object o : forum.getTopicsSet()) {
 				DiscussionTopic topic = (DiscussionTopic)o;
@@ -867,8 +981,8 @@ public class SakaiProxyImpl implements SakaiProxy {
 				tobj.put("id", topic.getId());
 				tobj.put("title", topic.getTitle());
 				if(topic.getAvailabilityRestricted()) {
-					tobj.put("due_date", DateFormatterUtil.format(topic.getCloseDate(), DATEPICKER_DATETIME_FORMAT, userLocale));
-					tobj.put("open_date", DateFormatterUtil.format(topic.getOpenDate(), DATEPICKER_DATETIME_FORMAT, userLocale));
+					tobj.put("due_date", formatToUserDateFormat(topic.getCloseDate()));
+					tobj.put("open_date", formatToUserDateFormat(topic.getOpenDate()));
 					tobj.put("restricted", true);
 				} else {
 					tobj.put("restricted", false);
@@ -876,7 +990,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 					tobj.put("open_date", null);
 				}
 				tobj.put("extraInfo", rb.getString("itemtype.topic"));
-				tobj.put("tool_title", "Forums");
+				tobj.put("tool_title", rb.getString("tool.forums.title"));
 				tobj.put("url", url);//TODO redirect to topic if possible
 				jsonForums.add(tobj);
 			}
@@ -885,76 +999,92 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return jsonForums;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public CourseDatesValidation validateForums(String siteId, JSONArray forums) throws Exception {
 		CourseDatesValidation forumValidate = new CourseDatesValidation();
 		List<CourseDatesError> errors = new ArrayList<>();
 		List<Object> updates = new ArrayList<>();
 
-		for (int i = 0; i < forums.size(); i++) {			
+		for (int i = 0; i < forums.size(); i++) {
 			JSONObject jsonForum = (JSONObject)forums.get(i);
+			int idx = Integer.parseInt(jsonForum.get("idx").toString());
 
-			Long forumId = (Long)jsonForum.get("id");
-			if (forumId == null) {
-				errors.add(new CourseDatesError("forum", "Forum or topic could not be found", "forums", "Forums", i));
-				continue;
-			}
+			try {
 
-			TimeZone userTimeZone = getUserTimeZone();
-			Instant openDate = parseStringToInstant((String)jsonForum.get("open_date"), userTimeZone);
-			Instant dueDate = parseStringToInstant((String)jsonForum.get("due_date"), userTimeZone);
-			boolean errored = false;
-			if (openDate == null) {
-				errors.add(new CourseDatesError("open_date", "Could not read Open date", "forums", "Forums", i));
-				errored = true;
-			}
-			if (dueDate == null) {
-				errors.add(new CourseDatesError("due_date", "Could not read Due date", "forums", "Forums", i));
-				errored = true;
-			}
-			if (errored) {
-				continue;
-			}
-
-			String entityType = (String)jsonForum.get("extraInfo");
-			CourseDatesUpdate update;
-			if("forum".equals(entityType)) {
-				BaseForum forum = forumManager.getForumById(true, forumId);
-				if (forum == null) {
-					errors.add(new CourseDatesError("forum", "Forum could not be found", "forums", "Forums", i));
+				Long forumId = (Long)jsonForum.get("id");
+				if (forumId == null) {
+					errors.add(new CourseDatesError("forum", rb.getString("error.forum.topic.not.found"), "forums", rb.getString("tool.forums.title"), idx));
 					continue;
 				}
 
-				/*boolean canUpdate = contentHostingService.allowUpdateResource(resourceId);
-				if (!canUpdate) {
-					errors.add(new CourseDatesError("forum", "Update permission denied", "forums", "Forums", i));
-				}*/
-				update = new CourseDatesUpdate(forum, openDate, dueDate, null);
-			} else {
-				Topic topic = forumManager.getTopicById(true, forumId);
-				if (topic == null) {
-					errors.add(new CourseDatesError("forum", "Topic could not be found", "forums", "Forums", i));
+				TimeZone userTimeZone = getUserTimeZone();
+				Instant openDate = parseStringToInstant((String)jsonForum.get("open_date"), userTimeZone);
+				Instant dueDate = parseStringToInstant((String)jsonForum.get("due_date"), userTimeZone);
+				boolean errored = false;
+				if (openDate == null) {
+					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.not.found"), "forums", rb.getString("tool.forums.title"), idx));
+					errored = true;
+				}
+				if (dueDate == null) {
+					errors.add(new CourseDatesError("due_date", rb.getString("error.due.date.not.found"), "forums", rb.getString("tool.forums.title"), idx));
+					errored = true;
+				}
+				if (errored) {
 					continue;
 				}
 
-/*				boolean canUpdate = contentHostingService.allowUpdateCollection(resourceId);
-				if (!canUpdate) {
-					errors.add(new CourseDatesError("forum", "Update permission denied", "forums", "Forums", i));
-				}*/
-				update = new CourseDatesUpdate(topic, openDate, dueDate, null);
-			}
+				String entityType = (String)jsonForum.get("extraInfo");
+				CourseDatesUpdate update;
+				if("forum".equals(entityType)) {
+					BaseForum forum = forumManager.getForumById(true, forumId);
+					if (forum == null) {
+						errors.add(new CourseDatesError("forum",rb.getString("error.forum.not.found"), "forums", rb.getString("tool.forums.title"), idx));
+						continue;
+					}
 
-			if (!update.openDate.isBefore(update.dueDate)) {
-				errors.add(new CourseDatesError("open_date", "Open date must fall before close date", "forums", "Forums", i));
-				continue;
+					/*boolean canUpdate = contentHostingService.allowUpdateResource(resourceId);
+					if (!canUpdate) {
+						errors.add(new CourseDatesError("forum", rb.getString("error.update.permission.denied"), "forums", rb.getString("tool.forums.title"), idx));
+					}*/
+					update = new CourseDatesUpdate(forum, openDate, dueDate, null);
+				} else {
+					Topic topic = forumManager.getTopicById(true, forumId);
+					if (topic == null) {
+						errors.add(new CourseDatesError("forum", rb.getString("error.topic.not.found"), "forums", rb.getString("tool.forums.title"), idx));
+						continue;
+					}
+
+	/*				boolean canUpdate = contentHostingService.allowUpdateCollection(resourceId);
+					if (!canUpdate) {
+						errors.add(new CourseDatesError("forum", rb.getString("error.update.permission.denied"), "forums", rb.getString("tool.forums.title"), idx));
+					}*/
+					update = new CourseDatesUpdate(topic, openDate, dueDate, null);
+				}
+
+				if (!update.openDate.isBefore(update.dueDate)) {
+					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.before.close.date"), "forums", rb.getString("tool.forums.title"), idx));
+					continue;
+				}
+				updates.add(update);
+
+			} catch(Exception e) {
+				errors.add(new CourseDatesError("open_date", rb.getString("error.uncaught"), "forums", rb.getString("tool.forums.title"), idx));
+				log.error("Error trying to validate Forums {}", e);
 			}
-			updates.add(update);
-		}		
-		
+		}
+
 		forumValidate.setErrors(errors);
 		forumValidate.setUpdates(updates);
 		return forumValidate;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public void updateForums(CourseDatesValidation forumValidation) throws Exception {
 		for (CourseDatesUpdate update : (List<CourseDatesUpdate>)(Object) forumValidation.getUpdates()) {
 			if (update.object instanceof BaseForum) {
@@ -975,13 +1105,17 @@ public class SakaiProxyImpl implements SakaiProxy {
 		}
 	}
 
-	/** ANNOUNCEMENTS **/
+	/***** ANNOUNCEMENTS *****/
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public JSONArray getAnnouncementsForContext(String siteId) {
 		JSONArray jsonAnnouncements = new JSONArray();
 		String anncRef = announcementService.channelReference(siteId, SiteService.MAIN_CONTAINER);
 		try {
 			Locale userLocale = getUserLocale();
-			String url = getUrlForTool("sakai.announcements");
+			String url = getUrlForTool(CourseDatesConstants.COMMON_ID_ANNOUNCEMENTS);
 			List announcements = announcementService.getMessages(anncRef, null, false, true);
 			for(Object o : announcements) {
 				AnnouncementMessage announcement = (AnnouncementMessage) o;
@@ -990,16 +1124,16 @@ public class SakaiProxyImpl implements SakaiProxy {
 				AnnouncementMessageHeader header = announcement.getAnnouncementHeader();
 				aobj.put("title", header.getSubject());
 				if(announcement.getProperties().getProperty(AnnouncementService.RETRACT_DATE) != null) {
-					aobj.put("due_date", announcement.getProperties().getInstantProperty(AnnouncementService.RETRACT_DATE));
+					aobj.put("due_date", formatToUserDateFormat(Date.from(announcement.getProperties().getInstantProperty(AnnouncementService.RETRACT_DATE))));
 				} else {
 					aobj.put("due_date", null);
 				}
 				if(announcement.getProperties().getProperty(AnnouncementService.RELEASE_DATE) != null) {
-					aobj.put("open_date", announcement.getProperties().getInstantProperty(AnnouncementService.RELEASE_DATE));
+					aobj.put("open_date", formatToUserDateFormat(Date.from(announcement.getProperties().getInstantProperty(AnnouncementService.RELEASE_DATE))));
 				} else {
 					aobj.put("open_date", null);
 				}
-				aobj.put("tool_title", "Announcements");
+				aobj.put("tool_title", rb.getString("tool.announcements.title"));
 				aobj.put("url", url + "?itemReference=" + Validator.escapeUrl(announcement.getReference()) + "&panel=Main&sakai_action=doShowmetadata&sakai.state.reset=true");
 				aobj.put("extraInfo", "false");
 				jsonAnnouncements.add(aobj);
@@ -1010,6 +1144,10 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return jsonAnnouncements;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public CourseDatesValidation validateAnnouncements(String siteId, JSONArray announcements) throws Exception {
 		CourseDatesValidation announcementValidate = new CourseDatesValidation();
 		List<CourseDatesError> errors = new ArrayList<>();
@@ -1018,52 +1156,63 @@ public class SakaiProxyImpl implements SakaiProxy {
 		String anncRef = announcementService.channelReference(siteId, SiteService.MAIN_CONTAINER);
 		/*boolean canUpdate = messageService.allowEditChanel(anncRef);
 		if (!canUpdate) {
-			errors.add(new CourseDatesError("announcement", "Update permission denied", "announcements", "Announcements", 0));
+			errors.add(new CourseDatesError("announcement", rb.getString("error.update.permission.denied"), "announcements", rb.getString("tool.announcements.title"), 0));
 		}*/ //this is not working
 		for (int i = 0; i < announcements.size(); i++) {
 			JSONObject jsonAnnouncement = (JSONObject)announcements.get(i);
+			int idx = Integer.parseInt(jsonAnnouncement.get("idx").toString());
 
-			String announcementId = (String)jsonAnnouncement.get("id");
-			if (announcementId == null) {
-				errors.add(new CourseDatesError("announcement", "Announcement could not be found", "announcements", "Announcements", i));
-				continue;
-			}
+			try {
 
-			TimeZone userTimeZone = getUserTimeZone();
-			Instant openDate = parseStringToInstant((String)jsonAnnouncement.get("open_date"), userTimeZone);
-			Instant dueDate = parseStringToInstant((String)jsonAnnouncement.get("due_date"), userTimeZone);
-			boolean errored = false;
-			if (openDate == null) {
-				errors.add(new CourseDatesError("open_date", "Could not read Open date", "announcements", "Announcements", i));
-				errored = true;
-			}
-			if (dueDate == null) {
-				errors.add(new CourseDatesError("due_date", "Could not read Due date", "announcements", "Announcements", i));
-				errored = true;
-			}
-			if (errored) {
-				continue;
-			}
+				String announcementId = (String)jsonAnnouncement.get("id");
+				if (announcementId == null) {
+					errors.add(new CourseDatesError("announcement", rb.getString("error.announcement.not.found"), "announcements", rb.getString("tool.announcements.title"), idx));
+					continue;
+				}
 
-			AnnouncementChannel aChannel = announcementService.getAnnouncementChannel(anncRef);
-			AnnouncementMessageEdit announcement = aChannel.editAnnouncementMessage(announcementId);
-			if (announcement == null) {
-				errors.add(new CourseDatesError("announcement", "Announcement could not be found", "announcements", "Announcements", i));
-				continue;
-			}
+				TimeZone userTimeZone = getUserTimeZone();
+				Instant openDate = parseStringToInstant((String)jsonAnnouncement.get("open_date"), userTimeZone);
+				Instant dueDate = parseStringToInstant((String)jsonAnnouncement.get("due_date"), userTimeZone);
+				boolean errored = false;
+				if (openDate == null) {
+					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.not.found"), "announcements", rb.getString("tool.announcements.title"), idx));
+					errored = true;
+				}
+				if (dueDate == null) {
+					errors.add(new CourseDatesError("due_date", rb.getString("error.due.date.not.found"), "announcements", rb.getString("tool.announcements.title"), idx));
+					errored = true;
+				}
+				if (errored) {
+					continue;
+				}
 
-			CourseDatesUpdate update = new CourseDatesUpdate(announcement, openDate, dueDate, null);
-			if (!update.openDate.isBefore(update.dueDate)) {
-				errors.add(new CourseDatesError("open_date", "Open date must fall before due date", "announcements", "Announcements", i));
-				continue;
+				AnnouncementChannel aChannel = announcementService.getAnnouncementChannel(anncRef);
+				AnnouncementMessageEdit announcement = aChannel.editAnnouncementMessage(announcementId);
+				if (announcement == null) {
+					errors.add(new CourseDatesError("announcement", rb.getString("error.announcement.not.found"), "announcements", rb.getString("tool.announcements.title"), idx));
+					continue;
+				}
+
+				CourseDatesUpdate update = new CourseDatesUpdate(announcement, openDate, dueDate, null);
+				if (!update.openDate.isBefore(update.dueDate)) {
+					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.before.due.date"), "announcements", rb.getString("tool.announcements.title"), idx));
+					continue;
+				}
+				updates.add(update);
+			} catch(Exception e) {
+				errors.add(new CourseDatesError("open_date", rb.getString("error.uncaught"), "announcements", rb.getString("tool.announcements.title"), idx));
+				log.error("Error trying to validate Announcements {}", e);
 			}
-			updates.add(update);
 		}
 		announcementValidate.setErrors(errors);
 		announcementValidate.setUpdates(updates);
 		return announcementValidate;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public void updateAnnouncements(CourseDatesValidation announcementValidate) throws Exception {
 		String anncRef = announcementService.channelReference(getCurrentSiteId(), SiteService.MAIN_CONTAINER);
 		AnnouncementChannel aChannel = announcementService.getAnnouncementChannel(anncRef);
@@ -1075,28 +1224,34 @@ public class SakaiProxyImpl implements SakaiProxy {
 		}
 	}
 
-	/** LESSONS **/
+	/***** LESSONS *****/
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public JSONArray getLessonsForContext(String siteId) {
 		JSONArray jsonLessons = new JSONArray();
 		Locale userLocale = getUserLocale();
-		String url = getUrlForTool("sakai.lessonbuildertool");
+		String url = getUrlForTool(CourseDatesConstants.COMMON_ID_LESSONS);
 		List<SimplePageItem> items = simplePageToolDao.findItemsInSite(siteId);
-		for (SimplePageItem item : items) {
-			if (item.getType() == SimplePageItem.PAGE) {
-				JSONObject lobj = new JSONObject();
-				lobj.put("id", Long.parseLong(item.getSakaiId()));
-				lobj.put("title", item.getName());
-				SimplePage page = simplePageToolDao.getPage(Long.parseLong(item.getSakaiId()));
-				if(page.getReleaseDate() != null) {
-					lobj.put("open_date", DateFormatterUtil.format(page.getReleaseDate(), DATEPICKER_DATETIME_FORMAT, userLocale));
-				} else {
-					lobj.put("open_date", null);
+		if (items != null) {
+			for (SimplePageItem item : items) {
+				if (item.getType() == SimplePageItem.PAGE) {
+					JSONObject lobj = new JSONObject();
+					lobj.put("id", Long.parseLong(item.getSakaiId()));
+					lobj.put("title", item.getName());
+					SimplePage page = simplePageToolDao.getPage(Long.parseLong(item.getSakaiId()));
+					if(page.getReleaseDate() != null) {
+						lobj.put("open_date", formatToUserDateFormat(page.getReleaseDate()));
+					} else {
+						lobj.put("open_date", null);
+					}
+					lobj.put("tool_title", rb.getString("tool.lessons.title"));
+					lobj.put("url", url);
+					lobj.put("extraInfo", "false");
+					jsonLessons.add(lobj);
+					jsonLessons = addAllSubpages(Long.parseLong(item.getSakaiId()), jsonLessons);
 				}
-				lobj.put("tool_title", "Lessons");
-				lobj.put("url", url);
-				lobj.put("extraInfo", "false");
-				jsonLessons.add(lobj);
-				jsonLessons = addAllSubpages(Long.parseLong(item.getSakaiId()), jsonLessons);
 			}
 		}
 		return jsonLessons;
@@ -1104,7 +1259,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 
 	private JSONArray addAllSubpages(Long pageId, JSONArray jsonLessons) {
 		List<SimplePageItem> items = simplePageToolDao.findItemsOnPage(pageId);
-		String url = getUrlForTool("sakai.lessonbuildertool");
+		String url = getUrlForTool(CourseDatesConstants.COMMON_ID_LESSONS);
 		Locale userLocale = getUserLocale();
 		for (SimplePageItem item : items) {
 			if (item.getType() == SimplePageItem.PAGE) {
@@ -1113,14 +1268,14 @@ public class SakaiProxyImpl implements SakaiProxy {
 				lobj.put("title", item.getName());
 				SimplePage page = simplePageToolDao.getPage(Long.parseLong(item.getSakaiId()));
 				if(page.getReleaseDate() != null) {
-					lobj.put("open_date", DateFormatterUtil.format(page.getReleaseDate(), DATEPICKER_DATETIME_FORMAT, userLocale));
+					lobj.put("open_date", formatToUserDateFormat(page.getReleaseDate()));
 				} else {
 					lobj.put("open_date", null);
 				}
-				lobj.put("tool_title", "Lessons");
-				lobj.put("url", url + "/ShowPage?itemId=" +item.getId() );//aqui si que es el id, no el sakai. el padre supongo q tb podria pero da igual ir al base
+				lobj.put("tool_title", rb.getString("tool.lessons.title"));
+				lobj.put("url", url + "/ShowPage?itemId=" +item.getId());//aqui si que es el id, no el sakai. el padre supongo q tb podria pero da igual ir al base
 						//igual necesita algo como sessionManager.getCurrentToolSession().setAttribute("current-pagetool-page", l);
-				lobj.put("extraInfo", "Subpage");
+				lobj.put("extraInfo", rb.getString("tool.lessons.extra.subpage"));
 				jsonLessons.add(lobj);
 				jsonLessons = addAllSubpages(Long.parseLong(item.getSakaiId()), jsonLessons);
 			}
@@ -1128,39 +1283,50 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return jsonLessons;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public CourseDatesValidation validateLessons(String siteId, JSONArray lessons) throws Exception {
 		CourseDatesValidation lessonsValidate = new CourseDatesValidation();
 		List<CourseDatesError> errors = new ArrayList<>();
 		List<Object> updates = new ArrayList<>();
 
 		/*if(!securityService.unlock(userId, SimplePage.PERMISSION_LESSONBUILDER_UPDATE, siteService.siteReference(siteId));
-			errors.add(new CourseDatesError("page", "Update permission denied", "lessons", "Lessons", 0));
+			errors.add(new CourseDatesError("page", rb.getString("error.update.permission.denied"), "lessons", rb.getString("tool.lessons.title"), 0));
 		}*/
 
 		for (int i = 0; i < lessons.size(); i++) {
 			JSONObject jsonItem = (JSONObject)lessons.get(i);
+			int idx = Integer.parseInt(jsonItem.get("idx").toString());
 
-			Long itemId = (Long)jsonItem.get("id");
-			if (itemId == null) {
-				errors.add(new CourseDatesError("page", "Lessons item could not be found", "lessons", "Lessons", i));
-				continue;
+			try {
+
+				Long itemId = (Long)jsonItem.get("id");
+				if (itemId == null) {
+					errors.add(new CourseDatesError("page", rb.getString("error.lessons.not.found"), "lessons", rb.getString("tool.lessons.title"), idx));
+					continue;
+				}
+
+				TimeZone userTimeZone = getUserTimeZone();
+				Instant openDate = parseStringToInstant((String)jsonItem.get("open_date"), userTimeZone);
+				if (openDate == null) {
+					errors.add(new CourseDatesError("due_date", rb.getString("error.release.date.not.found"), "lessons", rb.getString("tool.lessons.title"), idx));
+					continue;
+				}
+
+				SimplePage page = simplePageToolDao.getPage(itemId);
+				if (page == null) {
+					errors.add(new CourseDatesError("page", rb.getString("error.lessons.not.found"), "lessons", rb.getString("tool.lessons.title"), idx));
+					continue;
+				}
+
+				CourseDatesUpdate update = new CourseDatesUpdate(page, openDate, null, null);
+				updates.add(update);
+			} catch(Exception e) {
+				errors.add(new CourseDatesError("open_date", rb.getString("error.uncaught"), "lessons", rb.getString("tool.lessons.title"), idx));
+				log.error("Error trying to validate Lessons {}", e);
 			}
-
-			TimeZone userTimeZone = getUserTimeZone();
-			Instant openDate = parseStringToInstant((String)jsonItem.get("open_date"), userTimeZone);
-			if (openDate == null) {
-				errors.add(new CourseDatesError("due_date", "Could not read Release date", "lessons", "Lessons", i));
-				continue;
-			}
-
-			SimplePage page = simplePageToolDao.getPage(itemId);
-			if (page == null) {
-				errors.add(new CourseDatesError("page", "Lessons item could not be found", "lessons", "Lessons", i));
-				continue;
-			}
-
-			CourseDatesUpdate update = new CourseDatesUpdate(page, openDate, null, null);
-			updates.add(update);
 		}
 
 		lessonsValidate.setErrors(errors);
@@ -1168,13 +1334,15 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return lessonsValidate;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public void updateLessons(CourseDatesValidation lessonsValidation) throws Exception {
 		for (CourseDatesUpdate update : (List<CourseDatesUpdate>)(Object) lessonsValidation.getUpdates()) {
 			SimplePage page = (SimplePage) update.object;
 			page.setReleaseDate(Date.from(update.openDate));
 			log.debug("Saving changes on lessons : {}", simplePageToolDao.quickUpdate(page));
-			//System.out.println(simplePageToolDao.update(page, new ArrayList<>(), null, false));
-			//System.out.println(simplePageToolDao.saveOrUpdate(page, new ArrayList<>(), null, false));
 		}
 	}
 }

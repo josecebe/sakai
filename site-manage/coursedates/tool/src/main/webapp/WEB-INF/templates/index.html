@@ -20,80 +20,89 @@
 		</script>
 		<script type="text/javascript" src="/library/js/lang-datepicker/lang-datepicker.js"></script>
 		<meta http-equiv="Content-Style-Type" content="text/css" />
+
+		<div class="page-header">
+			<h1 th:text="#{page.instructions}">Add/Edit Options in batch</h1>
+		</div>
+
 		<form class="panel-group" id="date-manager-form" method="POST">
 			<div class="sak-banner-error hidden" id="form-errors">
 				<span th:text="#{errors.instruction}">Your update could not be saved due to the following errors:</span>
 				<ul></ul>
 			</div>
 
-			<div class="panel panel-default">
+			<div class="sak-banner-success hidden" id="form-success">
+				<span th:text="#{success.message}">The dates were updated successfully.</span>
+			</div>
+
+			<div th:if="${assignments != null}" class="panel panel-default">
 				<div class="panel-heading">
 					<h4 class="panel-title">
-						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-assignments" aria-expanded="true"><span th:text="#{tool.assignments.title}">Assignments</span></a>
+						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-assignments" class="collapsed" aria-expanded="false"><span th:text="#{tool.assignments.title}">Assignments</span></a>
 					</h4>
 				</div>
 				<div th:replace="tool_fragment :: tool_fragment(items=${assignments}, toolId='assignments', collapseId='collapse-assignments')"></div>
 			</div>
-			<div class="panel panel-default">
+			<div th:if="${assessments != null}" class="panel panel-default">
 				<div class="panel-heading">
 					<h4 class="panel-title">
-						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-assessments" aria-expanded="true"><span th:text="#{tool.assessments.title}">Tests & Quizzes</span></a>
+						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-assessments" class="collapsed" aria-expanded="false"><span th:text="#{tool.assessments.title}">Tests & Quizzes</span></a>
 					</h4>
 				</div>
 				<div th:replace="tool_fragment :: tool_fragment(items=${assessments}, toolId='assessments', collapseId='collapse-assessments')"></div>
 			</div>
-			<div class="panel panel-default">
+			<div th:if="${signupMeetings != null}" class="panel panel-default">
 				<div class="panel-heading">
 					<h4 class="panel-title">
-						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-signup" aria-expanded="true"><span th:text="#{tool.signup.title}">Sign up</span></a>
+						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-signup" class="collapsed" aria-expanded="false"><span th:text="#{tool.signup.title}">Sign up</span></a>
 					</h4>
 				</div>
-				<div th:replace="tool_fragment :: tool_fragment(items=${signupMeetings}, toolId='signupMeetings', collapseId='collapse-signup')"></div>				
+				<div th:replace="tool_fragment :: tool_fragment(items=${signupMeetings}, toolId='signupMeetings', collapseId='collapse-signup')"></div>
 			</div>
-			<div class="panel panel-default">
+			<div th:if="${gradebookItems != null}" class="panel panel-default">
 				<div class="panel-heading">
 					<h4 class="panel-title">
-						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-gradebook" aria-expanded="true"><span th:text="#{tool.gradebook.title}">Gradebook</span></a>
+						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-gradebook" class="collapsed" aria-expanded="false"><span th:text="#{tool.gradebook.title}">Gradebook</span></a>
 					</h4>
 				</div>
 				<div th:replace="tool_fragment :: tool_fragment(items=${gradebookItems}, toolId='gradebookItems', collapseId='collapse-gradebook')"></div>
 			</div>
-			<div class="panel panel-default">
+			<div th:if="${resources != null}" class="panel panel-default">
 				<div class="panel-heading">
 					<h4 class="panel-title">
-						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-resources" aria-expanded="true"><span th:text="#{tool.resources.title}">Resources</span></a>
+						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-resources" class="collapsed" aria-expanded="false"><span th:text="#{tool.resources.title}">Resources</span></a>
 					</h4>
 				</div>
 				<div th:replace="tool_fragment :: tool_fragment(items=${resources}, toolId='resources', collapseId='collapse-resources')"></div>
 			</div>
-			<div class="panel panel-default">
+			<div th:if="${calendarEvents != null}" class="panel panel-default">
 				<div class="panel-heading">
 					<h4 class="panel-title">
-						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-calendar" aria-expanded="true"><span th:text="#{tool.calendar.title}">Calendar</span></a>
+						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-calendar" class="collapsed" aria-expanded="false"><span th:text="#{tool.calendar.title}">Calendar</span></a>
 					</h4>
 				</div>
 				<div th:replace="tool_fragment :: tool_fragment(items=${calendarEvents}, toolId='calendarEvents', collapseId='collapse-calendar')"></div>
 			</div>
-			<div class="panel panel-default">
+			<div th:if="${forums != null}" class="panel panel-default">
 				<div class="panel-heading">
 					<h4 class="panel-title">
-						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-forums" aria-expanded="true"><span th:text="#{tool.forums.title}">Forums</span></a>
+						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-forums" class="collapsed" aria-expanded="false"><span th:text="#{tool.forums.title}">Forums</span></a>
 					</h4>
 				</div>
 				<div th:replace="tool_fragment :: tool_fragment(items=${forums}, toolId='forums', collapseId='collapse-forums')"></div>
 			</div>
-			<div class="panel panel-default">
+			<div th:if="${announcements != null}" class="panel panel-default">
 				<div class="panel-heading">
 					<h4 class="panel-title">
-						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-announcements" aria-expanded="true"><span th:text="#{tool.announcements.title}">Announcements</span></a>
+						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-announcements" class="collapsed" aria-expanded="false"><span th:text="#{tool.announcements.title}">Announcements</span></a>
 					</h4>
 				</div>
 				<div th:replace="tool_fragment :: tool_fragment(items=${announcements}, toolId='announcements', collapseId='collapse-announcements')"></div>
 			</div>
-			<div class="panel panel-default">
+			<div th:if="${lessons != null}" class="panel panel-default">
 				<div class="panel-heading">
 					<h4 class="panel-title">
-						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-lessons" aria-expanded="true"><span th:text="#{tool.lessons.title}">Lessons</span></a>
+						<a data-toggle="collapse" data-parent="#accordion" href="#collapse-lessons" class="collapsed" aria-expanded="false"><span th:text="#{tool.lessons.title}">Lessons</span></a>
 					</h4>
 				</div>
 				<div th:replace="tool_fragment :: tool_fragment(items=${lessons}, toolId='lessons', collapseId='collapse-lessons')"></div>
@@ -221,9 +230,10 @@
 					/*[/]*/
 
 					var notModified = [];
+
 					$('.datepicker').each(function (idx, elt) {
 						var $td = $(elt).closest('td');
-						var $hidden = $td.find('input:hidden');
+						var $hidden = $td.find('input[type=hidden]');
 
 						var dataTool = $hidden.data('tool');
 						var dataField = $hidden.data('field');
@@ -288,6 +298,7 @@
 						$('.ajax-error').removeClass('ajax-error');
 						$('#form-errors').removeClass('hidden');
 						$('#form-errors').find('ul').empty();
+						$('#form-success').addClass('hidden');
 						$(errors).each(function (idx, elt) {
 							var id = ['cell', elt.toolId, elt.field, elt.idx].join('_');
 							var $cell = $('#' + id);
@@ -295,7 +306,28 @@
 							$cell.find('.errors').text(elt.msg);
 							$('#form-errors').find('ul').append('<li>' + elt.toolTitle + ' - ' + updates[elt.toolId][elt.idx].title + ' - ' + elt.msg + '</li>');
 						});
-						$("html, body").animate({ scrollTop: 0 }, "fast");
+						window.scrollTo({top: 0, behavior: 'smooth'});
+					}
+
+					function printSuccess() {
+						$('#form-success').removeClass('hidden');
+						$('#form-errors').addClass('hidden');
+						$('.ajax-error').removeClass('ajax-error');
+						$('.errors').each(function(idx, elt) {
+							$(elt).text('');
+						});
+						window.scrollTo({top: 0, behavior: 'smooth'});
+
+						updates.assignmentsUpd = [];
+						updates.assessmentsUpd = [];
+						updates.gradebookItemsUpd = [];
+						updates.signupMeetingsUpd = [];
+						updates.resourcesUpd = [];
+						updates.calendarEventsUpd = [];
+						updates.forumsUpd = [];
+						updates.announcementsUpd = [];
+						updates.lessonsUpd = [];
+						$('#submit-form-button').prop('disabled', true);
 					}
 
 					var modalConfirm = function(callback){
@@ -328,7 +360,6 @@
 
 					function confirmFormSubmit() {
 						var $form = $('#date-manager-form');
-						var formData = new FormData();
 						var assignmentsStr = JSON.stringify(updates.assignmentsUpd.filter(el=>el));
 						var assessmentsStr = JSON.stringify(updates.assessmentsUpd.filter(el=>el));
 						var gradebookStr = JSON.stringify(updates.gradebookItemsUpd.filter(el=>el));
@@ -338,22 +369,24 @@
 						var forumsStr = JSON.stringify(updates.forumsUpd.filter(el=>el));
 						var announcementsStr = JSON.stringify(updates.announcementsUpd.filter(el=>el));
 						var lessonsStr = JSON.stringify(updates.lessonsUpd.filter(el=>el));
-						var json = '{"assignments": ' + assignmentsStr + ', "assessments": ' + assessmentsStr + ', "gradebookItems": ' + gradebookStr + ', "signupMeetings": ' + signupStr + ', "resources": ' + resourcesStr 
-									+ ', "calendarEvents": ' + calendarStr + ', "forums": ' + forumsStr + ', "announcements": ' + announcementsStr + ', "lessons": ' + lessonsStr + '}';
-						formData.append('json', json);
+						var json = '{"assignments": ' + assignmentsStr + ', "assessments": ' + assessmentsStr + ', "gradebookItems": ' + gradebookStr + ', "signupMeetings": ' + signupStr + ', "resources": ' + resourcesStr + ', "calendarEvents": ' + calendarStr + ', "forums": ' + forumsStr + ', "announcements": ' + announcementsStr + ', "lessons": ' + lessonsStr + '}';
 
 						$.ajax({
 							url: window.location + '/date-manager/update',
 							processData: false,
-							contentType: false,
+							dataType : "json",
+							contentType: "application/json; charset=utf-8",
 							cache: false,
-							data: formData,
+							data: json,
 							method: $form.attr('method'),
 							success: function(response){
 								if (response.status === 'ERROR') {
 									errors = response.errors;
 									printErrors();
-								} else window.location.reload();
+
+								} else {
+									printSuccess();
+								}
 							}
 						});
 					}
