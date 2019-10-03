@@ -135,7 +135,7 @@
 
 		<script th:inline="javascript">
 			/*<![CDATA[*/
-				document.addEventListener("DOMContentLoaded", function(e) {
+				document.addEventListener('DOMContentLoaded', function(e) {
 					var updates = [];
 					updates.assignments = [];
 					updates.assignmentsUpd = [];
@@ -306,17 +306,21 @@
 							$cell.find('.errors').text(elt.msg);
 							$('#form-errors').find('ul').append('<li>' + elt.toolTitle + ' - ' + updates[elt.toolId][elt.idx].title + ' - ' + elt.msg + '</li>');
 						});
-						window.scrollTo({top: 0, behavior: 'smooth'});
+						$('html, body').animate({ scrollTop: 0 }, 'slow');
 					}
 
 					function printSuccess() {
-						$('#form-success').removeClass('hidden');
+						$('#form-success').removeClass('hidden').css('display', '');
 						$('#form-errors').addClass('hidden');
 						$('.ajax-error').removeClass('ajax-error');
 						$('.errors').each(function(idx, elt) {
 							$(elt).text('');
 						});
-						window.scrollTo({top: 0, behavior: 'smooth'});
+						$('html, body').animate({ scrollTop: 0 }, 'slow');
+
+						setTimeout(function() {
+							$('#form-success').fadeOut(400);
+						}, 5000);
 
 						updates.assignmentsUpd = [];
 						updates.assessmentsUpd = [];
@@ -331,9 +335,9 @@
 					}
 
 					var modalConfirm = function(callback){
-						$('#date-manager-form').on("submit", function(e){
+						$('#date-manager-form').on('submit', function(e){
 							e.preventDefault();
-							$("#modal-confirm").modal('show');
+							$('#modal-confirm').modal('show');
 							$('#modified-dates').empty();
 							$.each([updates.assignmentsUpd.filter(el=>el), updates.assessmentsUpd.filter(el=>el), updates.gradebookItemsUpd.filter(el=>el), updates.signupMeetingsUpd.filter(el=>el), 
 							updates.resourcesUpd.filter(el=>el), updates.calendarEventsUpd.filter(el=>el), updates.forumsUpd.filter(el=>el), updates.announcementsUpd.filter(el=>el), updates.lessonsUpd.filter(el=>el)], function(idx, elt) {
@@ -343,14 +347,14 @@
 							});
 						});
 
-						$("#modal-btn-confirm").on("click", function(){
+						$('#modal-btn-confirm').on('click', function(){
 							callback(true);
-							$("#modal-confirm").modal('hide');
+							$('#modal-confirm').modal('hide');
 						});
 
-						$("#modal-btn-cancel").on("click", function(){
+						$('#modal-btn-cancel').on('click', function(){
 							callback(false);
-							$("#modal-confirm").modal('hide');
+							$('#modal-confirm').modal('hide');
 						});
 					};
 
@@ -374,8 +378,8 @@
 						$.ajax({
 							url: window.location + '/date-manager/update',
 							processData: false,
-							dataType : "json",
-							contentType: "application/json; charset=utf-8",
+							dataType : 'json',
+							contentType: 'application/json; charset=utf-8',
 							cache: false,
 							data: json,
 							method: $form.attr('method'),

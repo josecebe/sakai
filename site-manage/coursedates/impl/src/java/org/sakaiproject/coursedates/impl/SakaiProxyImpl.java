@@ -218,9 +218,9 @@ public class SakaiProxyImpl implements SakaiProxy {
 		for (int i = 0; i < assignments.size(); i++) {
 			JSONObject jsonAssignment = (JSONObject)assignments.get(i);
 			String assignmentId = (String)jsonAssignment.get("id");
+                        int idx = Integer.parseInt(jsonAssignment.get("idx").toString());
 
 			try {
-				int idx = Integer.parseInt(jsonAssignment.get("idx").toString());
 
 				if (assignmentId == null) {
 					errors.add(new CourseDatesError("assignment", rb.getString("error.assignment.not.found"), "assignments", rb.getString("tool.assignments.title"), idx));
@@ -282,7 +282,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 				updates.add(update);
 
 			} catch (Exception ex) {
-				errors.add(new CourseDatesError("open_date", rb.getString("error.uncaught"), "assignments", rb.getString("tool.assignments.title"), i));
+				errors.add(new CourseDatesError("open_date", rb.getString("error.uncaught"), "assignments", rb.getString("tool.assignments.title"), idx));
 				log.error("Error trying to validate Assignments {}", ex);
 			}
 		}
