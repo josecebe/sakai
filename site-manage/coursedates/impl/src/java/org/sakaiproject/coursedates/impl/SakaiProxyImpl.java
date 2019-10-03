@@ -186,7 +186,6 @@ public class SakaiProxyImpl implements SakaiProxy {
 		JSONArray jsonAssignments = new JSONArray();
 		Collection<Assignment> assignments = assignmentService.getAssignmentsForContext(siteId);
 		Locale userLocale = this.getUserLocale();
-		//String url = getUrlForTool("sakai.assignment.grades");
 		for(Assignment assignment : assignments) {
 			try {
 				JSONObject assobj = new JSONObject();
@@ -267,7 +266,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 					continue;
 				}
 
-				CourseDatesUpdate update = new CourseDatesUpdate(assignment, openDate, dueDate, acceptUntil/*,(Boolean)jsonAssignment.get("published")*/);
+				CourseDatesUpdate update = new CourseDatesUpdate(assignment, openDate, dueDate, acceptUntil);
 
 				if (!update.openDate.isBefore(update.dueDate)) {
 					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.before.due.date"), "assignments", rb.getString("tool.assignments.title"), idx));
@@ -329,7 +328,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 			assobj.put("is_draft", true);
 			assobj.put("late_handling", lateHandling);
 			assobj.put("tool_title", rb.getString("tool.assessments.title"));
-			assobj.put("url", url);//TODO redirect to assessment if possible
+			assobj.put("url", url);
 			assobj.put("extraInfo", rb.getString("itemtype.draft"));
 			jsonAssessments.add(assobj);
 		}
@@ -420,7 +419,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 					acceptUntil = null;
 				}
 
-				CourseDatesUpdate update = new CourseDatesUpdate(assessment, openDate, dueDate, acceptUntil/*,(Boolean)jsonAssignment.get("published")*/);
+				CourseDatesUpdate update = new CourseDatesUpdate(assessment, openDate, dueDate, acceptUntil);
 
 				if (dueDate != null && !update.openDate.isBefore(update.dueDate)) {
 					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.before.due.date"), "assessments", rb.getString("tool.assessments.title"), idx));
@@ -500,7 +499,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 				JSONObject gobj = new JSONObject();
 				gobj.put("id", gbitem.getId());
 				gobj.put("title", gbitem.getName());
-				gobj.put("due_date", gbitem.getDueDate());//no es release date en realidad?
+				gobj.put("due_date", gbitem.getDueDate());
 				gobj.put("tool_title", rb.getString("tool.gradebook.title"));
 				gobj.put("url", url);
 				gobj.put("extraInfo", "false");
@@ -548,7 +547,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 					continue;
 				}
 
-				CourseDatesUpdate update = new CourseDatesUpdate(gbitem, null, dueDate, null/*,(Boolean)jsonAssignment.get("published")*/);
+				CourseDatesUpdate update = new CourseDatesUpdate(gbitem, null, dueDate, null);
 				updates.add(update);
 
 			} catch (Exception ex) {
@@ -591,7 +590,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 			mobj.put("due_date", formatToUserDateFormat(meeting.getEndTime()));
 			mobj.put("open_date", formatToUserDateFormat(meeting.getStartTime()));
 			mobj.put("tool_title", rb.getString("tool.signup.title"));
-			mobj.put("url", url);//TODO redirect to meeting if possible, it seems to be managed directly on the tool
+			mobj.put("url", url);
 			mobj.put("extraInfo", "false");
 			jsonMeetings.add(mobj);
 		}
@@ -645,7 +644,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 					continue;
 				}
 
-				CourseDatesUpdate update = new CourseDatesUpdate(meeting, openDate, dueDate, null/*,(Boolean)jsonMeeting.get("published")*/);
+				CourseDatesUpdate update = new CourseDatesUpdate(meeting, openDate, dueDate, null);
 				if (!update.openDate.isBefore(update.dueDate)) {
 					errors.add(new CourseDatesError("open_date", rb.getString("error.open.date.before.due.date"), "signupMeetings", rb.getString("tool.signup.title"), idx));
 					continue;
@@ -662,9 +661,9 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return meetingsValidate;
 	}
 
-		/**
-		 * {@inheritDoc}
-		 */
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void updateSignupMeetings(CourseDatesValidation signupValidate) throws Exception {
 		for (CourseDatesUpdate update : (List<CourseDatesUpdate>)(Object) signupValidate.getUpdates()) {
@@ -676,9 +675,9 @@ public class SakaiProxyImpl implements SakaiProxy {
 	}
 
 	/***** RESOURCES *****/
-		/**
-		 * {@inheritDoc}
-		 */
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public JSONArray getResourcesForContext(String siteId) {
 		JSONArray jsonResources = new JSONArray();
@@ -696,7 +695,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 			else robj.put("open_date", null);
 			robj.put("extraInfo", StringUtils.defaultIfBlank(res.getProperties().getProperty(ResourceProperties.PROP_CONTENT_TYPE), rb.getString("itemtype.folder")));
 			robj.put("tool_title", rb.getString("tool.resources.title"));
-			robj.put("url", url);//redirect to tool, although we could link the file
+			robj.put("url", url);
 			jsonResources.add(robj);
 		}
 		return jsonResources;
@@ -823,7 +822,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 		Locale userLocale = getUserLocale();
 		int startYear = timeService.newTime().breakdownLocal().getYear() - CourseDatesConstants.LIST_VIEW_YEAR_RANGE / 2;
 	 	int endYear = timeService.newTime().breakdownLocal().getYear() + CourseDatesConstants.LIST_VIEW_YEAR_RANGE / 2;
-		Time startingListViewDate = timeService.newTimeLocal(startYear,/* startMonth, startDay,*/0, 0, 0, 0, 0, 0);
+		Time startingListViewDate = timeService.newTimeLocal(startYear, 0, 0, 0, 0, 0, 0);
 		Time endingListViewDate = timeService.newTimeLocal(endYear, 12, 31, 23, 59, 59, 99);
 		try {
 			Calendar c = getCalendar();
@@ -974,7 +973,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 			}
 			fobj.put("extraInfo", rb.getString("itemtype.forum"));
 			fobj.put("tool_title", rb.getString("tool.forums.title"));
-			fobj.put("url", url);//TODO redirect to forum if possible
+			fobj.put("url", url);
 			for (Object o : forum.getTopicsSet()) {
 				DiscussionTopic topic = (DiscussionTopic)o;
 				JSONObject tobj = new JSONObject();
@@ -991,7 +990,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 				}
 				tobj.put("extraInfo", rb.getString("itemtype.topic"));
 				tobj.put("tool_title", rb.getString("tool.forums.title"));
-				tobj.put("url", url);//TODO redirect to topic if possible
+				tobj.put("url", url);
 				jsonForums.add(tobj);
 			}
 			jsonForums.add(fobj);
@@ -1057,7 +1056,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 						continue;
 					}
 
-	/*				boolean canUpdate = contentHostingService.allowUpdateCollection(resourceId);
+					/*boolean canUpdate = contentHostingService.allowUpdateCollection(resourceId);
 					if (!canUpdate) {
 						errors.add(new CourseDatesError("forum", rb.getString("error.update.permission.denied"), "forums", rb.getString("tool.forums.title"), idx));
 					}*/
@@ -1157,7 +1156,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 		/*boolean canUpdate = messageService.allowEditChanel(anncRef);
 		if (!canUpdate) {
 			errors.add(new CourseDatesError("announcement", rb.getString("error.update.permission.denied"), "announcements", rb.getString("tool.announcements.title"), 0));
-		}*/ //this is not working
+		}*/
 		for (int i = 0; i < announcements.size(); i++) {
 			JSONObject jsonAnnouncement = (JSONObject)announcements.get(i);
 			int idx = Integer.parseInt(jsonAnnouncement.get("idx").toString());
@@ -1273,8 +1272,7 @@ public class SakaiProxyImpl implements SakaiProxy {
 					lobj.put("open_date", null);
 				}
 				lobj.put("tool_title", rb.getString("tool.lessons.title"));
-				lobj.put("url", url + "/ShowPage?itemId=" +item.getId());//aqui si que es el id, no el sakai. el padre supongo q tb podria pero da igual ir al base
-						//igual necesita algo como sessionManager.getCurrentToolSession().setAttribute("current-pagetool-page", l);
+				lobj.put("url", url);
 				lobj.put("extraInfo", rb.getString("tool.lessons.extra.subpage"));
 				jsonLessons.add(lobj);
 				jsonLessons = addAllSubpages(Long.parseLong(item.getSakaiId()), jsonLessons);
