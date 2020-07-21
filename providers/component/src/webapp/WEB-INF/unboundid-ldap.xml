@@ -308,7 +308,10 @@
  				<entry key="FMED"><value>aluFM</value></entry>
  				<entry key="FDE"><value>aluFDE</value></entry>
  				<entry key="FCE"><value>aluFCE</value></entry>
- 				<entry key="INEFC"><value>aluINEFC</value></entry>
+ 				<entry key="CFC"><value>aluCFC</value></entry>
+				<entry key="IL"><value>aluIL</value></entry>
+				<entry key="UESTIU"><value>aluUESTIU</value></entry>
+				<entry key="INEFC"><value>aluINEFC</value></entry>
  				<entry key="DOCTORAT"><value>aluDOCTORAT</value></entry>
  				<entry key="MOBILITAT"><value>aluMOBILITAT</value></entry> 
  				<entry key="EXTERNS"><value>aluEXTERNS</value></entry>
