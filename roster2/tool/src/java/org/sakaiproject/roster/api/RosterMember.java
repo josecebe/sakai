@@ -84,6 +84,8 @@ public class RosterMember {
 	private int totalSiteVisits;
 	@Getter @Setter
 	private long lastVisitTime;
+	@Getter @Setter
+	private String dni;
 	
 	public void addGroup(String groupId, String groupTitle) {
 		
