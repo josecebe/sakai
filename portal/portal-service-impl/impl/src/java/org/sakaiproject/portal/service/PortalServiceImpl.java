@@ -685,6 +685,7 @@ public class PortalServiceImpl implements PortalService
 			linkUrls = Arrays.asList(ArrayUtils.nullToEmpty(serverConfigurationService.getStrings("portal.quicklink.url")));
 			linkTitles = Arrays.asList(ArrayUtils.nullToEmpty(serverConfigurationService.getStrings("portal.quicklink.title")));
 			linkNames = Arrays.asList(ArrayUtils.nullToEmpty(serverConfigurationService.getStrings("portal.quicklink.name")));
+			linkUserTypes = Arrays.asList(ArrayUtils.nullToEmpty(serverConfigurationService.getStrings("portal.quicklink.usertypes")));
 			linkIcons = Arrays.asList(ArrayUtils.nullToEmpty(serverConfigurationService.getStrings("portal.quicklink.icon")));
 		}
 
@@ -709,8 +710,8 @@ public class PortalServiceImpl implements PortalService
 				String title = linkTitles.get(i);
 				String name = linkNames.get(i);
 				String icon = linkIcons.get(i);
-
 				String allowedUserTypesString = linkUserTypes.get(i);
+				
 				boolean quickLinkAllowed = false;
 
 				if (userType != null && allowedUserTypesString != null) {
