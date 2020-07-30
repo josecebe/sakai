@@ -9,13 +9,20 @@ roster.setupPrintButton = function () {
     var button = $(this);
 
     button.prop('disabled', true);
+    	$('.roster-print-button').prepend ('<span class="spincircle fa fa-circle-o-notch fa-spin"></span>');
+
 
     e.preventDefault();
-    roster.renderMembership({renderAll: true, callback: function () {
+    roster.renderMembership({
+    	renderAll: true,	
+    	forceOfficialPicture: roster.officialPictureMode,
+    	callback: function () {
 
         $('#roster-members-content').waitForImages(function () {
 
-          button.prop('disabled', false);
+        	$('.spincircle').remove();
+			button.prop('disabled', false);
+
           window.print();
         });
       }
