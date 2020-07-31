@@ -50,6 +50,7 @@
 			</list>
 		</entry>
 		<!-- UDL -->
+		<!--<entry key="officialInstructorToSiteRole" value="Instructor"/>-->
 		<entry key="officialInstructorToSiteRole" value="Professor"/>
 		<entry key="enrollmentStatusToSiteRole">
 			<map>

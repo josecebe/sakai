@@ -164,11 +164,9 @@
 		  <value>true</value>
 		</property -->
 		
-		<!-- UDL: CANVI QUE ESTAVA A LA 11 PER ESTABLIR PRIORITAT, PERO REQUEREIX CANVIS EN UNBOUNDDIRECTORYPROVIDER.JAVA , DE MOMENT NO L'AFEGEIXO 
 		<property name="priorityTypeList">
  			<value>personUdL,aluDOCTORAT,aluEXTERNS</value>
  		</property>
- 		-->
  		
 		<!-- Optional. Defaults to an instance of 
 		org.sakaiproject.unboundid.SimpleLdapAttributeMapper -->
@@ -235,7 +233,7 @@
  				<entry key="email"><value>mail</value></entry>
  				<entry key="dni"><value>carLicense</value></entry>  
  				<entry key="tipus"><value>employeeType</value></entry>
- 				<entry key="b64:jpegPhoto"><value>jpegPhoto</value></entry>      
+ 				<entry key="b64:jpegPhoto"><value>jpegPhoto</value></entry>     
 			</map>
 		</property>
 		
