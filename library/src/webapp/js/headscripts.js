@@ -793,6 +793,11 @@ function includeWebjarLibrary(library) {
 		libraryVersion = "5.5.0";
 		document.write('\x3Cscript src="' + webjars + 'dropzone/'+libraryVersion + '/min/dropzone.min.js' + ver + '">' + '\x3C/script>');
 		document.write('\x3Clink rel="stylesheet" href="' + webjars + 'dropzone/'+libraryVersion + '/min/dropzone.min.css' + ver + '"/>');
+	} else if (library == 'dropzone-udl') {
+		libraryVersion = "5.2.0";
+                document.write('\x3Cscript src="' + webjars + 'dropzone/'+libraryVersion + '/dropzone.js' + ver + '">' + '\x3C/script>');
+                document.write('\x3Clink rel="stylesheet" href="' + webjars + 'dropzone/'+libraryVersion + '/min/dropzone.min.css' + ver + '"/>');
+		
 	} else if (library == 'select2') {
 		libraryVersion = "4.0.12";
 		document.write('\x3Cscript src="' + webjars + 'select2/' + libraryVersion + '/js/select2.full.min.js' + ver + '">' + '\x3C/script>');
