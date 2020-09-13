@@ -46,21 +46,33 @@ $header-font-weight: 700 !default;										// 400 or 700 as you wish
 
 /* Color palette */
 $background-color: 			 #FFFFFF !default;
-$background-color-secondary: #000036 !default;
+$background-color-secondary: #424242 !default;
 
-$primary-color:    			 #15597e !default;
+$tool-background-color:		 $background-color !default;
+$toolMenuBGColor:			 #EBEBEB !default;
+$toolMenuColor: 			 #424242 !default;
+$toolTabBGColor: 			 #F8F8F8 !default;
+$toolBorderColor:			 #E0E0E0 !default;
+
+$primary-color:    			 #831453 !default;
 $primary-color-highContrast: darken( $primary-color, 4% ) !default;	// for use of primary on non-white light backgrounds, such as greys
 $primary-color-shadow:			 adjust-hue( $primary-color, 5 ) !default;	// To give primary a darker shadow
+
 $secondary-color:  			 #F00 !default;
 $alt-colour: 				 #d36f00 !default;
 
-$text-color:				 #212121 !default;
+$text-color:				 #424242 !default;
 $text-color-disabled:		 #767676 !default;
 
 $body-background-color: #FAFAFA !default;
 
 $portal-background-color: $background-color !default;
 $portal-mask-background:  rgba(0,0,0,0.5) !default;
+
+$breadcrumbs-color:			    $text-color !default;
+$breadcrumbs-tool-color:		 #259bcd !default;
+$breadcrumbs-hover-color:		 ligthen( $breadcrumbs-tool-color, 5% ) !default;
+
 
 /* Tool tabs */
 $tool-background-color:		 $background-color !default;

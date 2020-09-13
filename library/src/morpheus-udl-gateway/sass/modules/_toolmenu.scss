@@ -182,7 +182,7 @@ body.is-logged-out{
 
 #toolMenuWrap{
 	#toolMenu {
-		background: #570d37;
+		background: #a06e8b;
 		position: absolute;
 		top: 95px;
 		left: 0;
@@ -439,14 +439,18 @@ nav#subSites{
 
 			a[href] {
 				color: #fff;
-				font-size: 0.9em;
+				font-weight: 600;
 				line-height: 1;
 				padding: 10px 0.5em 9px 0.5em;
 				text-decoration: none;
 				transition: background 0.15s linear;
-
+					
 				&:hover {
 					background: #831453;
+				}
+
+				@media #{$phone}{
+					font-size: 0.9em;
 				}
 			}
 		}

@@ -385,6 +385,58 @@ body.is-logged-out{
 
 }
 
+#loginLink1{
+	background: $primary-color;
+	border-radius: 0;
+	border: 1px solid #FFF;
+	color: #FFF;
+	display: inline-block;
+	line-height: 1;
+	overflow: hidden;
+	font-size: 13px;
+	padding: 10px 6px;
+	text-align: center;
+	text-transform: uppercase;
+	min-width: 133px;
+	white-space: nowrap;
+	text-decoration: none;
+	transition: background-color 0.15s linear;
+	&:hover{
+		background-color: $background-color;
+		color: $primary-color;
+	}
+}
+
+#loginLink2, ._form-toggler{
+	background: rgba(#FFF, 0.1);
+	border-radius: 0;
+	border: 1px solid #FFF;
+	color: #FFF;
+	display: inline-block;
+	line-height: 1;
+	overflow: hidden;
+	padding: 10px 6px;
+	text-align: center;
+	font-size: 13px;
+	text-transform: uppercase;
+	min-width: 133px;
+	white-space: nowrap;
+	text-decoration: none;
+	transition: background-color 0.15s linear;
+	@media #{$phone}{
+		background-color: transparent;
+		border: 1px solid #FFF;
+		color: #FFF;
+		&:hover{
+			color: #FFF;
+		}	
+	}
+	&:hover{
+		background-color: $background-color;
+		color: $primary-color;
+	}
+}
+
 #mastLogin{
 
 	// make it so the separator lines are a consistent height
@@ -408,7 +460,6 @@ body.is-logged-out{
 		@include display-flex;
 		@include justify-content(center);
 	}
-
 	._form-toggler {
 		background: rgba(255,255,255,0.1);
 		border-radius: 0;
@@ -432,6 +483,7 @@ body.is-logged-out{
 		}
 	}
 
+
 	ul{
 		display: inline-block;
 		text-align: left;
@@ -446,52 +498,59 @@ body.is-logged-out{
 
 
 	#loginForm{
-
-		@include display-flex;
-		@include align-items( center );
-		@include justify-content( flex-end );
-
-		label{
-			margin: 0 0.5em 0 0;
-			font-weight: normal;
-			text-transform: capitalize;
-
-			@media #{$phone}{
-				display: none;
-			}
+		label{ 
+			font-weight: 400;
+			font-size: 13px;
+			margin-left: 8px;
 		}
-		input[type="text"],input[type="password"],input[type="email"]{
-			margin: 0 1em 0 0;
-			padding: 0.25em;
-			border: 0px none;
-			@media #{$phone}{
-				width: 40%;
-				margin-right: 0.6em;
-				font-size: $default-font-size - 2px;
-			}
-		}
-		#submit{
-			margin: 0;
-			padding: 0.4em 1em;
-			font-size: $default-font-size;
-			color: #333333;
+		.Mrphs-loginForm__input{
+			border: 1px solid white;
+			font-size: 14px;
+			padding: 6px 5px 6px 5px;
 			position: relative;
-
-			@media #{$phone}
-			{
-				font-size: $default-font-size - 2px;
-				padding: 0.25em 1em;
+			top: 1px;
+		}
+		.Mrphs-loginForm__button{
+			@extend #loginLink1;
+			color: #FFF !important;
+			&:hover{
+				color: $primary-color !important;	
 			}
 		}
-		.#{$namespace}loginForm__button{
-			@extend .button;
+		.close{
+			color: #FFF;
+			opacity: 1;
 		}
+	}
 
-		.close {
-			display: none;
+	._form-toggler{
+		color: #FFF !important;
+		&:hover{
+			color: $primary-color !important;	
 		}
+	}
 
-		@media #{$phone} {
+	@media #{$desktop}{
+		position: absolute;
+		top: 3px;
+    	right: 8px;
+    	.close{
+    		display: none;
+    		color: #FFF;
+    		opacity: 1;
+    	}
+		._form-toggler{ 
+			display: none; 
+		}
+	}
+	@media #{$phone}{
+		position: absolute;
+		z-index: 999;
+		top: 25vh;
+		text-align: center;
+		right: 0;
+		left: 0;
+		#loginForm{ 
 			display: none;
 			position: absolute;
 			top: -10vh;
@@ -499,59 +558,27 @@ body.is-logged-out{
 			bottom: -18vh;
 			right: 3vh;
 			background: #612045;
-			z-index: 2;
+			z-index: 100000;
 			padding: 3vh;
 			text-align: left;
 			border: 1px solid #FFF;
 			box-shadow: 0px 0px 7px 2px rgba(0,0,0,0.5);
-
-			.close {
-				color: #FFF;
-				opacity: 1;
-				font-size: 16px;
-			}
-
-			label {
+			label{
 				display: block;
 				margin: 8px 0 5px 0;
 			}
-
-			.#{$namespace}loginForm__input {
-				border: 1px solid white !important;
-				font-size: 14px !important;
-				padding: 6px 5px 6px 5px !important;
-				position: relative;
-				top: 1px;
-				width: 100% !important;
-			}
-
-			.#{$namespace}loginForm__button {
-				background: #831453;
-				border-radius: 0;
-				border: 1px solid #FFF;
-				color: #FFF !important;
-				display: inline-block;
-				line-height: 1;
-				overflow: hidden;
-				font-size: 13px	!important;
-				padding: 10px 6px !important;
-				text-align: center;
-				text-transform: uppercase;
-				min-width: 133px;
-				white-space: nowrap;
-				text-decoration: none;
-				transition: background-color 0.15s linear;
-				margin-top: 19px !important;
-
-				&:hover, &:active {
-					color: #831453 !important;
-					background-color: #fff;
-					border: #fff;
-				}
+			.close{
+				display: block !important;
 			}
 		}
-
+		.Mrphs-loginForm__button{
+			margin-top: 19px;
+		}
+		.Mrphs-loginForm__input{
+			width: 100%;
+		}
 	}
+
 
 	#loginUser{
 		@include display-flex;
