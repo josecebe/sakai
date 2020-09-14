@@ -108,6 +108,18 @@
     sakai-scorm-tool : ( extend : fa-file-archive-o ),
     sakai-scorm-singlepackage-tool : ( extend : fa-file-archive-o ),
 
+    // UdL Tools
+    sakai-iframe-myworkspace : (extend : fa-map-signs),
+    sakai-iframe-intranet : (extend :fa-sitemap),
+    sakai-iframe-actes : (extend :fa-file-excel-o),
+    sakai-iframe-biblioteca : (extend :fa-bookmark),
+
+    sakai-iframe-expedient : (extend :fa-graduation-cap),
+    sakai-iframe-utilitats : (extend :fa-briefcase),
+    sakai-guiadocent-ice : (extend :fa-file-o),
+    sakai-datacollector-biblioteca : (extend :fa-bookmark),
+    sakai-einahelpdesk : (extend :fa-wrench),
+
     // other icons
     check : ( extend : fa-check ),
     clip : ( extend : fa-paperclip ),
