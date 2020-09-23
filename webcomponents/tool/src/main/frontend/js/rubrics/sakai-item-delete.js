@@ -197,4 +197,7 @@ export class SakaiItemDelete extends RubricsElement {
   }
 }
 
-customElements.define("sakai-item-delete", SakaiItemDelete);
+if (!customElements.get("sakai-item-delete")) {
+  customElements.define("sakai-item-delete", SakaiItemDelete);
+}
+
