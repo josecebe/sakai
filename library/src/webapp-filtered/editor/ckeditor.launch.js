@@ -171,12 +171,12 @@ sakai.editor.editors.ckeditor.launch = function(targetId, config, w, h) {
             ['Link','Unlink','Anchor'],
             (sakai.editor.enableResourceSearch
                 ? ( sakai.editor.contentItemUrl
-                    ? ['ContentItem', 'AudioRecorder','ResourceSearch', 'Image','Html5video','Table','HorizontalRule','Smiley','SpecialChar']
-                    : ['AudioRecorder','ResourceSearch', 'Image','Html5video','Table','HorizontalRule','Smiley','SpecialChar']
+                    ? ['ContentItem', 'AudioRecorder','ResourceSearch', 'kaltura', 'Image','Html5video','Table','HorizontalRule','Smiley','SpecialChar']
+                    : ['AudioRecorder','ResourceSearch', 'kaltura', 'Image','Html5video','Table','HorizontalRule','Smiley','SpecialChar']
                   )
 		: ( sakai.editor.contentItemUrl
-                    ? ['ContentItem', 'AudioRecorder', 'Image','Html5video','Table','HorizontalRule','Smiley','SpecialChar']
-                    : ['AudioRecorder', 'Image','Html5video','Table','HorizontalRule','Smiley','SpecialChar']
+                    ? ['ContentItem', 'AudioRecorder', 'kaltura', 'Image','Html5video','Table','HorizontalRule','Smiley','SpecialChar']
+                    : ['AudioRecorder', 'kaltura', 'Image','Html5video','Table','HorizontalRule','Smiley','SpecialChar']
                   )
             ),
             '/',
@@ -264,6 +264,9 @@ sakai.editor.editors.ckeditor.launch = function(targetId, config, w, h) {
         // Accessibility checker has a dependency on balloonpanel
         CKEDITOR.plugins.addExternal('balloonpanel',webJars+'balloonpanel/${ckeditor.balloonpanel.version}/', 'plugin.js');
         CKEDITOR.plugins.addExternal('a11ychecker',webJars+'a11ychecker/${ckeditor.a11ychecker.version}/', 'plugin.js');
+        //Kaltura Sakai Extension
+        CKEDITOR.plugins.addExternal('kaltura',basePath+'kaltura/', 'plugin.js');
+
         /*
            To enable after the deadline uncomment these two lines and add atd-ckeditor to toolbar
            and to extraPlugins. This also needs extra stylesheets.
@@ -281,6 +284,8 @@ sakai.editor.editors.ckeditor.launch = function(targetId, config, w, h) {
         //ckconfig.contentsCss = [basePath+'atd-ckeditor/atd.css'];
 
         ckconfig.extraPlugins+="${ckeditor-extra-plugins}${ckeditor-a11y-extra-plugins}";
+        //Kaltura Sakai Extension
+        ckconfig.extraPlugins+=",kaltura";
 
         // Load FontAwesome CSS in case a user wants to manually add FA markup
         ckconfig.contentsCss.push(webJars+'fontawesome/4.7.0/css/font-awesome.min.css');
