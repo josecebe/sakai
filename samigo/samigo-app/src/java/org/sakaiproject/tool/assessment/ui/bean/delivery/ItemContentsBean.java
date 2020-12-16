@@ -1175,6 +1175,7 @@ public class ItemContentsBean implements Serializable {
 		if (count > 0) {
 			ItemGradingData data = getItemGradingDataArray().get(count - 1);
 			rationale = ComponentManager.get(FormattedText.class).convertFormattedTextToPlaintext(data.getRationale());
+		    rationale = ComponentManager.get(FormattedText.class).escapeHtml(rationale, true);
 		}
 		return Validator.check(rationale, "");
 	}
