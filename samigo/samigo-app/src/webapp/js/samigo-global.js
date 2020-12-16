@@ -23,7 +23,6 @@ function encodeHTML(text) {
 }
 
 function chef_setupformattedtextarea(client_id, shouldToggle, frame_id) {
-	$("body").height($("body").outerHeight() + 600);
 
 	var textarea_id = client_id + "_textinput";
 
