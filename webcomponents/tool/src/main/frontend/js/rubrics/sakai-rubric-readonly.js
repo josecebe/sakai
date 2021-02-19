@@ -3,6 +3,7 @@ import {html} from "/webcomponents/assets/lit-element/lit-element.js";
 import {SakaiRubricCriteriaReadonly} from "./sakai-rubric-criteria-readonly.js";
 import {SharingChangeEvent} from "./sharing-change-event.js";
 import {tr} from "./sakai-rubrics-language.js";
+import { SakaiRubricPdf } from "./sakai-rubric-pdf.js";
 
 export class SakaiRubricReadonly extends RubricsElement {
 
@@ -17,6 +18,8 @@ export class SakaiRubricReadonly extends RubricsElement {
 
     return {
       rubric: { type: Object },
+      enablePdfExport: Boolean,
+      token: { type: String }
     };
   }
 
@@ -44,6 +47,11 @@ export class SakaiRubricReadonly extends RubricsElement {
             <span class="hidden-sm hidden-xs sr-only"><sr-lang key="copy" /></span>
             <span role="button" title="${tr("copy_to_site", [this.rubric.title])}" tabindex="0" class="clone fa fa-copy" @click="${this.copyToSite}"></span>
           </div>
+          ${this.enablePdfExport ? html`
+            <div class="action-container">
+              <sakai-rubric-pdf rubricTitle="${this.rubric.title}" token="${this.token}" rubricId="${this.rubric.id}"/>
+            </div>
+            ` : ""}
         </div>
       </div>
 
@@ -86,6 +94,7 @@ export class SakaiRubricReadonly extends RubricsElement {
     e.stopPropagation();
     this.dispatchEvent(new CustomEvent('copy-to-site', { detail: this.rubric.id }));
   }
+
 }
 
 customElements.define("sakai-rubric-readonly", SakaiRubricReadonly);

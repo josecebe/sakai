@@ -19,6 +19,9 @@ import javax.annotation.Resource;
 
 import org.sakaiproject.portal.util.PortalUtils;
 import org.sakaiproject.rubrics.logic.RubricsService;
+import org.sakaiproject.tool.api.ToolSession;
+import org.sakaiproject.tool.api.SessionManager;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +33,9 @@ public class MainController {
     @Resource(name = "org.sakaiproject.rubrics.logic.RubricsService")
     private RubricsService rubricsService;
 
+    @Autowired
+    private SessionManager sessionManager;
+
     @GetMapping("/")
     public String indexRedirect() {
         return "redirect:/index";
@@ -38,9 +44,14 @@ public class MainController {
     @GetMapping("/index")
     public String index(ModelMap model) {
         String token = rubricsService.generateJsonWebToken("sakai.rubrics");
+        boolean enablePdfExport = rubricsService.isPdfExportEnabled();
+        model.addAttribute("enablePdfExport", enablePdfExport);
         model.addAttribute("token", token);
         model.addAttribute("sakaiSessionId", rubricsService.getCurrentSessionId());
+        ToolSession currentToolSession = sessionManager.getCurrentToolSession();
+        model.addAttribute("toolUrlId", currentToolSession.getPlacementId());
         model.addAttribute("cdnQuery", PortalUtils.getCDNQuery());
         return "index";
     }
+    
 }

@@ -16,6 +16,8 @@ export class SakaiRubricsSharedList extends RubricsElement {
     return {
       token: { type: String },
       rubrics: { type: Array },
+      enablePdfExport: Boolean,
+      toolUrlId: { type: String}
     };
   }
 
@@ -38,7 +40,7 @@ export class SakaiRubricsSharedList extends RubricsElement {
       <div role="tablist">
       ${repeat(this.rubrics, r => r.id, r => html`
         <div class="rubric-item" id="rubric_item_${r.id}">
-          <sakai-rubric-readonly token="${this.token}" rubric="${JSON.stringify(r)}" @copy-to-site="${this.copyToSite}"></sakai-rubric-readonly>
+          <sakai-rubric-readonly token="${this.token}" rubric="${JSON.stringify(r)}" @copy-to-site="${this.copyToSite}" enablePdfExport="${this.enablePdfExport}" toolUrlId="${this.toolUrlId}"></sakai-rubric-readonly>
         </div>
       `)}
       </div>
