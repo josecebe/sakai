@@ -12,13 +12,14 @@ export class SakaiRubricReadonly extends RubricsElement {
     super();
 
     this.rubricExpanded = true;
+    this.enablePdfExport = false;
   }
 
   static get properties() {
 
     return {
       rubric: { type: Object },
-      enablePdfExport: Boolean,
+      enablePdfExport: { type: Boolean },
       token: { type: String }
     };
   }

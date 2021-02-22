@@ -23,6 +23,7 @@ export class SakaiRubric extends RubricsElement {
         "Content-Type": "application/json-patch+json",
       },
     };
+    this.enablePdfExport = false;
   }
 
   static get properties() {
@@ -34,7 +35,7 @@ export class SakaiRubric extends RubricsElement {
       weightedIcon: String,
       totalWeight: String,
       validWeight: Boolean,
-      enablePdfExport: Boolean
+      enablePdfExport: { type: Boolean }
     };
   }
 
